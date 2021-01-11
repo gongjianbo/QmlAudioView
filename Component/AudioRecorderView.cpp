@@ -1,8 +1,6 @@
 #include "AudioRecorderView.h"
 
 #include <cmath>
-#include <Windows.h>
-//#include <Dbt.h>
 
 #include <QPainter>
 #include <QFileInfo>
@@ -27,6 +25,26 @@ AudioRecorderView::AudioRecorderView(QQuickItem *parent)
     //抽样点绘制
     sampleData.reserve(10000); //预置元素内存
 
+    //设备插拔后更新信息
+    AudioRecorderOperate *operate=audioHelper.getOperate();
+    connect(operate,&AudioRecorderOperate::inputDevicesChanged,
+            &audioInput,&AudioRecorderInput::updateInputDevices);
+    connect(operate,&AudioRecorderOperate::outputDevicesChanged,
+            &audioOutput,&AudioRecorderOutput::updateOutputDevices);
+    //当前正使用的输入输出设备改变
+    connect(operate,&AudioRecorderOperate::currentInputChanged,
+            this,[this](){
+        qDebug()<<"input device change";
+        const RecordState cur_state=recordState;
+        stop();
+        emit inputDeviceChanged(cur_state);
+    });
+    connect(operate,&AudioRecorderOperate::currentOutputChanged,
+            this,[this](){
+        qDebug()<<"output device change";
+        const RecordState cur_state=recordState;
+        emit outputDeviceChanged(cur_state);
+    });
     //输入输出状态
     connect(&audioInput,&AudioRecorderInput::stateChanged,
             this,[this](QAudio::State state){
@@ -57,15 +75,10 @@ AudioRecorderView::AudioRecorderView(QQuickItem *parent)
             stop();
         }
     });
-
-    //注册到qApp过滤native事件
-    qApp->installNativeEventFilter(this);
 }
 
 AudioRecorderView::~AudioRecorderView()
 {
-    //貌似析构的时候自动会remove
-    qApp->removeNativeEventFilter(this);
     stop();
     audioIODevice->close();
 }
@@ -203,6 +216,7 @@ void AudioRecorderView::play(const QString &device)
         return;
     QAudioFormat format=audioInput.inputFormat;
     if(audioOutput.startPlay(audioIODevice,format,device)){
+        audioHelper.getOperate()->setCurrentOutputDevice(audioOutput.audioDevice);
         //切换为播放状态
         setRecordState(Playing);
     }else{
@@ -237,6 +251,7 @@ void AudioRecorderView::record(int sampleRate, const QString &device)
     QAudioFormat format;
     format.setSampleRate(sampleRate);
     if(audioInput.startRecord(audioIODevice,format,device)){
+        audioHelper.getOperate()->setCurrentInputDevice(audioInput.audioDevice);
         //切换为录制状态
         setRecordState(Record);
     }else{
@@ -374,50 +389,6 @@ void AudioRecorderView::geometryChanged(const QRectF &newGeometry, const QRectF 
     updateDataSample();
     calculateSpace(plotAreaHeight());
     refresh();
-}
-
-bool AudioRecorderView::nativeEventFilter(const QByteArray &eventType, void *message, long *)
-{
-    if(eventType == "windows_generic_MSG" || eventType == "windows_dispatcher_MSG")
-    {
-        MSG* msg = reinterpret_cast<MSG*>(message);
-        //设备插拔
-        if(msg&&msg->message == WM_DEVICECHANGE)
-        {
-            //同步阻塞会有警告
-            //Could not invoke audio interface activation.
-            //(因为应用程序正在发送一个输入同步呼叫，所以无法执行传出的呼叫。)
-            QTimer::singleShot(0,[this]{
-                //一些详细信息需要注册，这里改为change就去查询输入列表是否变更
-                //qDebug()<<"change"<<msg->wParam;
-                //switch(msg->wParam)
-                //{
-                //default: break;
-                //    //设备插入
-                //case DBT_DEVICEARRIVAL:
-                //    qDebug()<<"in";
-                //    break;
-                //    //设备移除
-                //case DBT_DEVICEREMOVECOMPLETE:
-                //    qDebug()<<"out";
-                //    break;
-                //}
-
-                //使用中的设备不存在，停止
-                const RecordState cur_state=recordState;
-                audioInput.updateInputDevices();
-                audioOutput.updateOutputDevices();
-                if(!audioInput.checkInputExists()){
-                    stop();
-                    emit inputDeviceChanged(cur_state);
-                }
-                if(!audioOutput.checkOutputExists()){
-                    emit outputDeviceChanged(cur_state);
-                }
-            });
-        }
-    }
-    return false;
 }
 
 int AudioRecorderView::plotAreaWidth() const

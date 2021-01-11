@@ -72,34 +72,40 @@ Item {
         Row{
             spacing: 10
             Button{
-                text: "record"
-                onClicked: recorder.record(16000,input_comb.currentText)
-            }
-            Button{
-                text: "stop"
-                onClicked: recorder.stop()
-            }
-            Button{
-                text: "play"
+                text: "录制"
                 onClicked: {
-                    recorder.output.resetToDefaultDevice()
-                    recorder.play(output_comb.currentText)
+                    if(recorder.input.isAvailableDevice(input_comb.currentText)){
+                        recorder.record(16000,input_comb.currentText);
+                    }else{
+                        console.log("音频输入设备不可用，请重新选择");
+                    }
                 }
             }
             Button{
-                text: "suspend"
+                text: "停止"
+                onClicked: recorder.stop()
+            }
+            Button{
+                text: "播放"
+                onClicked: {
+                    recorder.output.resetToDefaultDevice();
+                    recorder.play(output_comb.currentText);
+                }
+            }
+            Button{
+                text: "暂停"
                 onClicked: recorder.suspendPlay()
             }
             Button{
-                text: "resume"
+                text: "恢复"
                 onClicked: recorder.resumePlay()
             }
             Button{
-                text: "save"
+                text: "保存文件"
                 onClicked: recorder.saveToFile("./save.wav")
             }
             Button{
-                text: "load"
+                text: "加载文件"
                 onClicked: recorder.loadFromFile("./save.wav")
             }
         }

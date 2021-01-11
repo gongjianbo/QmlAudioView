@@ -2,7 +2,6 @@
 #define AUDIORECORDERINPUT_H
 
 #include <QObject>
-#include <QAudioDeviceInfo>
 #include <QAudioInput>
 
 #include "AudioRecorderDevice.h"
@@ -30,7 +29,7 @@ public:
     ~AudioRecorderInput();
 
     //重新检测输入设备列表
-    Q_INVOKABLE void updateInputDevices();
+    Q_INVOKABLE void updateInputDevices(const QList<QAudioDeviceInfo> &devices = QList<QAudioDeviceInfo>());
     //检测当前使用的输入设备是否还存在，stop时别用
     Q_INVOKABLE bool checkInputExists() const;
     //置为当前默认设备

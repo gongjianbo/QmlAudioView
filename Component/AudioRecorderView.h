@@ -2,8 +2,6 @@
 #define AUDIORECORDERVIEW_H
 
 #include <QQuickPaintedItem>
-//#include <QQmlParserStatus>
-#include <QAbstractNativeEventFilter>
 #include <QDateTime>
 #include <QTimer>
 #include <QElapsedTimer>
@@ -11,6 +9,7 @@
 #include "AudioRecorderDevice.h"
 #include "AudioRecorderInput.h"
 #include "AudioRecorderOutput.h"
+#include "AudioRecorderHelper.h"
 
 /**
  * @brief 录音可视化组件
@@ -27,7 +26,6 @@
  * 2020-12-14 增加设备插拔监测
  */
 class AudioRecorderView : public QQuickPaintedItem
-        , public QAbstractNativeEventFilter
         , public AudioRecorderBase
 {
     Q_OBJECT
@@ -139,7 +137,6 @@ public:
 protected:
     void paint(QPainter *painter) override;
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
-    bool nativeEventFilter(const QByteArray &eventType, void *message, long *result) override;
 
     //去掉padding的宽高
     int plotAreaWidth() const;
@@ -167,6 +164,8 @@ private:
     AudioRecorderInput audioInput;
     //处理输出
     AudioRecorderOutput audioOutput;
+    //多线程辅助类
+    AudioRecorderHelper audioHelper;
     //输出数据计数
     qint64 outputCount=0;
     //播放数据计数

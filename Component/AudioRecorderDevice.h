@@ -4,6 +4,7 @@
 #include <QAudio>
 #include <QAudioFormat>
 #include <QIODevice>
+#include <QAudioDeviceInfo>
 
 /**
  * @brief wav文件头结构体

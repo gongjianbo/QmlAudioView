@@ -2,7 +2,6 @@
 #define AUDIORECORDEROUTPUT_H
 
 #include <QObject>
-#include <QAudioDeviceInfo>
 #include <QAudioOutput>
 
 #include "AudioRecorderDevice.h"
@@ -30,7 +29,7 @@ public:
     void setCacheDir(const QString &dir);
 
     //重新检测输出设备列表
-    Q_INVOKABLE void updateOutputDevices();
+    Q_INVOKABLE void updateOutputDevices(const QList<QAudioDeviceInfo> &devices = QList<QAudioDeviceInfo>());
     //检测当前使用的输出设备是否还存在，stop时别用
     Q_INVOKABLE bool checkOutputExists() const;
     //置为当前默认设备

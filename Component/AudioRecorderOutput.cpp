@@ -38,9 +38,13 @@ void AudioRecorderOutput::setCacheDir(const QString &dir)
     }
 }
 
-void AudioRecorderOutput::updateOutputDevices()
+void AudioRecorderOutput::updateOutputDevices(const QList<QAudioDeviceInfo> &devices)
 {
-    allOutputDevices=QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
+    if(devices.isEmpty()){
+        allOutputDevices=QAudioDeviceInfo::availableDevices(QAudio::AudioOutput);
+    }else{
+        allOutputDevices=devices;
+    }
     filterOutputDevices.clear();
 
     //根据采样率过滤输入设备
@@ -141,7 +145,7 @@ bool AudioRecorderOutput::startPlay(AudioRecorderDevice *io, const QAudioFormat 
         //目前用notify来控制进度刷新
         audioOutput->setNotifyInterval(50);
         //缓冲区
-        audioOutput->setBufferSize(12800);
+        //audioOutput->setBufferSize(12800);
     }
     io->reset();
     audioOutput->start(io);

@@ -25,9 +25,13 @@ AudioRecorderInput::~AudioRecorderInput()
     freeRecord();
 }
 
-void AudioRecorderInput::updateInputDevices()
+void AudioRecorderInput::updateInputDevices(const QList<QAudioDeviceInfo> &devices)
 {
-    allInputDevices=QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
+    if(devices.isEmpty()){
+        allInputDevices=QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
+    }else{
+        allInputDevices=devices;
+    }
     filterInputDevices.clear();
 
     //根据采样率过滤输入设备
