@@ -11,6 +11,7 @@ Item {
         id: recorder
         anchors.fill: parent
         anchors.topMargin: btn_area.height+10
+        radius: 4
     }
 
     Column{
@@ -24,6 +25,7 @@ Item {
                 id: input_comb
                 width: 250
                 model: recorder.deviceInfo.inputDeviceNames
+                //可以保留点弹框刷新设备信息
                 //popup.onAboutToShow: {
                 //    recorder.deviceInfo.updateDeviceInfos();
                 //}
