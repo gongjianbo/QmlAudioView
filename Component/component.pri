@@ -1,14 +1,16 @@
 HEADERS += \
+    $$PWD/AudioRecorderBuffer.h \
+    $$PWD/AudioRecorderDefine.h \
     $$PWD/AudioRecorderDevice.h \
-    $$PWD/AudioRecorderHelper.h \
     $$PWD/AudioRecorderInput.h \
-    $$PWD/AudioRecorderOutput.h \
+    $$PWD/AudioRecorderOperate.h \
     $$PWD/AudioRecorderView.h \
     $$PWD/ComponentRegister.h \
 
 SOURCES += \
+    $$PWD/AudioRecorderBuffer.cpp \
+    $$PWD/AudioRecorderDefine.cpp \
     $$PWD/AudioRecorderDevice.cpp \
-    $$PWD/AudioRecorderHelper.cpp \
     $$PWD/AudioRecorderInput.cpp \
-    $$PWD/AudioRecorderOutput.cpp \
-    $$PWD/AudioRecorderView.cpp \
+    $$PWD/AudioRecorderOperate.cpp \
+    $$PWD/AudioRecorderView.cpp

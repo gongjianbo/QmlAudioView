@@ -1,67 +1,186 @@
 #include "AudioRecorderDevice.h"
 
-const char *RIFF_FLAG="RIFF";
-const char *WAVE_FLAG="WAVE";
-const char *FMT_FLAG="fmt ";
-const char *DATA_FLAG="data";
+#include <Windows.h>
+//#include <Dbt.h>
 
-AudioRecorderWavHead AudioRecorderWavHead::createWavHead(int sampleRate, unsigned int dataSize)
+#include <QTime>
+#include <QTimer>
+#include <QMetaType>
+#include <QCoreApplication>
+#include <QtConcurrentRun>
+#include <QDebug>
+
+AudioRecorderDevice::AudioRecorderDevice(QObject *parent) : QObject(parent)
 {
-    //部分参数暂时用的固定值
-    const int bits=16;
-    const int channels=1;
-    const int head_size = sizeof(AudioRecorderWavHead);
-    AudioRecorderWavHead wav_head;
-    memset(&wav_head, 0, head_size);
+    qRegisterMetaType<QList<QAudioDeviceInfo>>("QList<QAudioDeviceInfo>");
 
-    memcpy(wav_head.riffFlag, RIFF_FLAG, 4);
-    memcpy(wav_head.waveFlag, WAVE_FLAG, 4);
-    memcpy(wav_head.fmtFlag, FMT_FLAG, 4);
-    memcpy(wav_head.dataFlag, DATA_FLAG, 4);
+    //connect(&futureWatcher,&QFutureWatcher::finished,this,[this](){});
+    //更新了设备列表
+    connect(this,&AudioRecorderDevice::inputDeviceInfosUpdated,
+            this,&AudioRecorderDevice::setInputDeviceInfos);
+    connect(this,&AudioRecorderDevice::outputDeviceInfosUpdated,
+            this,&AudioRecorderDevice::setOutputDeviceInfos);
+    //延时刷新
+    updateTimer.setSingleShot(true);
+    connect(&updateTimer,&QTimer::timeout,this,&AudioRecorderDevice::updateDeviceInfos);
 
-    //出去头部前8个字节的长度，用的44字节的格式头，所以+44-8=36
-    wav_head.riffSize = dataSize + 36;
-    //不知道干嘛的
-    wav_head.fmtSize = 16;
-    //1为pcm
-    wav_head.compressionCode = 0x01;
-    wav_head.numChannels = channels;
-    wav_head.sampleRate = sampleRate;
-    wav_head.bytesPerSecond = (bits / 8) * channels * sampleRate;
-    wav_head.blockAlign = (bits / 8) * channels;
-    wav_head.bitsPerSample = bits;
-    //出去头的数据长度
-    wav_head.dataSize = dataSize;
-
-    return wav_head;
+    //注册到qApp过滤native事件
+    qApp->installNativeEventFilter(this);
+    //初始化设备信息
+    resetCurrentInput();
+    resetCurrentOutput();
+    updateDeviceInfos();
 }
 
-bool AudioRecorderWavHead::isValidWavHead(const AudioRecorderWavHead &head)
+AudioRecorderDevice::~AudioRecorderDevice()
 {
-    //简单的比较，主要用在未使用解析器时解析wav头
-    if(memcmp(head.riffFlag, RIFF_FLAG, 4)!=0||
-            memcmp(head.waveFlag, WAVE_FLAG, 4)!=0||
-            memcmp(head.fmtFlag, FMT_FLAG, 4)!=0||
-            memcmp(head.dataFlag, DATA_FLAG, 4)!=0||
-            head.riffSize!=head.dataSize+36||
-            head.compressionCode!=0x01)
-        return false;
-    return true;
+    //貌似析构的时候自动会remove
+    qApp->removeNativeEventFilter(this);
+    if(!futureWatcher.isFinished())
+        futureWatcher.waitForFinished();
 }
 
-AudioRecorderDevice::AudioRecorderDevice(AudioRecorderBase *base, QObject *parent)
-    : QIODevice(parent),basePtr(base)
+void AudioRecorderDevice::setInputDeviceNames(const QStringList &names)
 {
-    Q_ASSERT(base!=nullptr);
+    if(inputDeviceNames!=names){
+        inputDeviceNames=names;
+        emit inputDeviceNamesChanged();
+    }
 }
 
-qint64 AudioRecorderDevice::readData(char *data, qint64 maxSize)
+void AudioRecorderDevice::setOutputDeviceNames(const QStringList &names)
 {
-    return basePtr->readData(data,maxSize);
+    if(outputDeviceNames!=names){
+        outputDeviceNames=names;
+        emit outputDeviceNamesChanged();
+    }
 }
 
-qint64 AudioRecorderDevice::writeData(const char *data, qint64 maxSize)
+bool AudioRecorderDevice::setCurrentInputName(const QString &name)
 {
-    return basePtr->writeData(data,maxSize);
+    for(auto &info:enableInputDeviceInfos){
+        if(info.deviceName()==name){
+            currentInputDeviceInfo=info;
+            return true;
+        }
+    }
+    return false;
 }
 
+bool AudioRecorderDevice::setCurrentInputIndex(int index)
+{
+    if(index>=0&&index<enableInputDeviceInfos.count()){
+        currentInputDeviceInfo=enableInputDeviceInfos.at(index);
+        return true;
+    }
+    return false;
+}
+
+void AudioRecorderDevice::resetCurrentInput()
+{
+    currentInputDeviceInfo=QAudioDeviceInfo::defaultInputDevice();
+}
+
+bool AudioRecorderDevice::setCurrentOutputName(const QString &name)
+{
+    for(auto &info:enableOutputDeviceInfos){
+        if(info.deviceName()==name){
+            currentOutputDeviceInfo=info;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool AudioRecorderDevice::setCurrentOutputIndex(int index)
+{
+    if(index>=0&&index<enableOutputDeviceInfos.count()){
+        currentOutputDeviceInfo=enableOutputDeviceInfos.at(index);
+        return true;
+    }
+    return false;
+}
+
+void AudioRecorderDevice::resetCurrentOutput()
+{
+    currentOutputDeviceInfo=QAudioDeviceInfo::defaultOutputDevice();
+}
+
+void AudioRecorderDevice::setInputDeviceInfos(const QList<QAudioDeviceInfo> &infos)
+{
+    enableInputDeviceInfos.clear();
+    QStringList name_list;
+    for(auto &info:infos)
+    {
+        //暂时固定过滤16k的
+        if(info.supportedSampleRates().contains(16000)){
+            enableInputDeviceInfos.push_back(info);
+            name_list.push_back(info.deviceName());
+        }
+    }
+    setInputDeviceNames(name_list);
+}
+
+void AudioRecorderDevice::setOutputDeviceInfos(const QList<QAudioDeviceInfo> &infos)
+{
+    enableOutputDeviceInfos.clear();
+    QStringList name_list;
+    for(auto &info:infos)
+    {
+        //暂时固定过滤16k的
+        if(info.supportedSampleRates().contains(16000)){
+            enableOutputDeviceInfos.push_back(info);
+            name_list.push_back(info.deviceName());
+        }
+    }
+    setOutputDeviceNames(name_list);
+}
+
+bool AudioRecorderDevice::nativeEventFilter(const QByteArray &eventType, void *message, long *result)
+{
+    Q_UNUSED(result);
+    if(eventType == "windows_generic_MSG" || eventType == "windows_dispatcher_MSG")
+    {
+        MSG* msg = reinterpret_cast<MSG*>(message);
+        //设备插拔，插入会触发两次，拔出会触发一次
+        if(msg&&msg->message == WM_DEVICECHANGE)
+        {
+            qDebug()<<"device changed ...";
+            updateTimer.start(500); //延迟500ms刷新设备列表
+            //for(auto &info:QAudioDeviceInfo::availableDevices(QAudio::AudioInput))
+            //    qDebug()<<info.deviceName()<<info.supportedSampleRates();
+            //同步阻塞会有警告，可能是此时系统设备信息还未更新完成
+            //警告：Could not invoke audio interface activation.
+            //(因为应用程序正在发送一个输入同步呼叫，所以无法执行传出的呼叫。)
+            //一些详细信息需要注册，这里改为change就去查询输入列表是否变更
+            //qDebug()<<"change"<<msg->wParam;
+            //switch(msg->wParam)
+            //{
+            //default: break;
+            //    //设备插入
+            //case DBT_DEVICEARRIVAL:
+            //    qDebug()<<"in";
+            //    break;
+            //    //设备移除
+            //case DBT_DEVICEREMOVECOMPLETE:
+            //    qDebug()<<"out";
+            //    break;
+            //}
+        }
+    }
+    return false;
+}
+
+void AudioRecorderDevice::updateDeviceInfos()
+{
+    if(!futureWatcher.isFinished()){
+        qDebug()<<"update device info failed, futureWatcher is running";
+        return;
+    }
+
+    QFuture<void> future = QtConcurrent::run([this]{
+        emit inputDeviceInfosUpdated(QAudioDeviceInfo::availableDevices(QAudio::AudioInput));
+        emit outputDeviceInfosUpdated(QAudioDeviceInfo::availableDevices(QAudio::AudioOutput));
+    });
+    futureWatcher.setFuture(future);
+}

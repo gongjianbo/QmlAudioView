@@ -13,8 +13,12 @@ public:
     {
         //录音组件
         qmlRegisterType<AudioRecorderView>("GongJianBo",1,0,"AudioRecorderView");
-        qmlRegisterUncreatableType<AudioRecorderInput>("GongJianBo",1,0,"AudioRecorderInput","can not instantiate AudioRecorderInput in qml");
-        qmlRegisterUncreatableType<AudioRecorderOutput>("GongJianBo",1,0,"AudioRecorderOutput","can not instantiate AudioRecorderOutput in qml");
+        qmlRegisterUncreatableType<AudioRecorderDevice>("GongJianBo",1,0,"AudioRecorderDevice",
+                                                       "can not instantiate AudioRecorderDevice in qml");
+        //qmlRegisterUncreatableType<AudioRecorderInput>("GongJianBo",1,0,"AudioRecorderInput",
+        //"can not instantiate AudioRecorderInput in qml");
+        //qmlRegisterUncreatableType<AudioRecorderOutput>("GongJianBo",1,0,"AudioRecorderOutput",
+        //"can not instantiate AudioRecorderOutput in qml");
     }
 };
 
