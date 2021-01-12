@@ -55,6 +55,35 @@ void AudioRecorderView::setDisplayMode(AudioRecorderView::DisplayMode mode)
     }
 }
 
+void AudioRecorderView::record(int sampleRate, const QString &deviceName)
+{
+    //先stop当前操作、清空数据，再开始录制操作
+    audioData.clear();
+    sampleData.clear();
+    //预置状态，待operate更新后再同步
+    setRecordState(RecordState);
+}
+
+void AudioRecorderView::stop()
+{
+
+}
+
+void AudioRecorderView::play(const QString &deviceName)
+{
+
+}
+
+void AudioRecorderView::suspendPlay()
+{
+
+}
+
+void AudioRecorderView::resumePlay()
+{
+
+}
+
 void AudioRecorderView::paint(QPainter *painter)
 {
     //暂时没有封装步骤

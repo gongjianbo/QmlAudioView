@@ -72,6 +72,20 @@ public:
     //设备信息
     AudioRecorderDevice *getDeviceInfo() { return &deviceInfo; }
 
+    //录制
+    //sampleRate:输入采样率
+    //device:输入设备名称，建议在deviceInfo设置，这里置空
+    Q_INVOKABLE void record(int sampleRate,const QString &deviceName=QString());
+    //停止录制/播放
+    Q_INVOKABLE void stop();
+    //播放
+    //device:输入设备名称，建议在deviceInfo设置，这里置空
+    Q_INVOKABLE void play(const QString &deviceName=QString());
+    //暂停播放
+    Q_INVOKABLE void suspendPlay();
+    //暂停恢复
+    Q_INVOKABLE void resumePlay();
+
 protected:
     void paint(QPainter *painter) override;
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
