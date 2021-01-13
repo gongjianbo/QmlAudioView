@@ -57,4 +57,29 @@ struct AudioRecorderWavHead
 };
 #pragma pack(pop)
 
+/**
+ * @brief 放一些枚举定义，全局变量等
+ */
+class AudioRecorder : public QObject
+{
+    Q_OBJECT
+public:
+    //状态
+    enum RecordState
+    {
+        Stop       //默认停止状态
+        ,Playing   //播放
+        ,PlayPause //播放暂停
+        ,Record    //录制
+    };
+    Q_ENUMS(RecordState)
+    //显示模式
+    enum DisplayMode
+    {
+        FullRange  //绘制全部数据
+        ,Tracking  //跟踪最新数据
+    };
+    Q_ENUMS(DisplayMode)
+};
+
 #endif // AUDIORECORDERDEFINE_H

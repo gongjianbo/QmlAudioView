@@ -6,9 +6,10 @@
 #include <QElapsedTimer>
 
 #include "AudioRecorderDefine.h"
+#include "AudioRecorderDevice.h"
 #include "AudioRecorderBuffer.h"
-//#include "AudioRecorderInput.h"
-//#include "AudioRecorderOutput.h"
+#include "AudioRecorderInput.h"
+#include "AudioRecorderOutput.h"
 
 /**
  * @brief 线程中进行的录制操作
@@ -25,10 +26,11 @@ class AudioRecorderOperate : public QObject
     Q_OBJECT
 public:
     explicit AudioRecorderOperate(QObject *parent = nullptr);
+    ~AudioRecorderOperate();
 
-    //当前是否有数据
-    bool getHasRecordData() const { return hasRecordData; }
-    void setHasRecordData(bool has);
+    //录制状态
+    AudioRecorder::RecordState getRecordState() const { return recordState; }
+    void setRecordState(AudioRecorder::RecordState state);
 
     //获取到的录音数据
     qint64 writeData(const char *data, qint64 maxSize) override;
@@ -36,13 +38,38 @@ public:
     qint64 readData(char *data, qint64 maxSize) override;
 
 signals:
-    void hasRecordDataChanged(bool has);
+    void recordStateChanged(AudioRecorder::RecordState state);
+    void dataChanged(const QByteArray &newData);
+
+public slots:
+    void init();
+    //录制
+    void doRecord(const QAudioDeviceInfo &device, const QAudioFormat &format);
+    //停止录制/播放
+    void doStop();
+    //播放
+    void doPlay(const QAudioDeviceInfo &device);
+    //暂停播放
+    void doSuspendPlay();
+    //暂停恢复
+    void doResumePlay();
 
 private:
     //QAudioInput/Output处理数据时回调IODevice的接口
     AudioRecorderBuffer *audioBuffer=nullptr;
-    //是否有录制的数据
-    bool hasRecordData=false;
+    //音频输入
+    AudioRecorderInput audioInput;
+    //音频输出
+    AudioRecorderOutput audioOutput;
+    //当前状态
+    AudioRecorder::RecordState recordState=AudioRecorder::Stop;
+
+    //输出数据计数，对应read/write接口
+    qint64 outputCount=0;
+    //播放数据计数，对应ui游标/audioOutput->processedUSecs()
+    qint64 playCount=0;
+    //数据缓冲区
+    QByteArray audioData;
 };
 
 #endif // AUDIORECORDEROPERATE_H

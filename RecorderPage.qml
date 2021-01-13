@@ -79,16 +79,12 @@ Item {
                         return;
                     recorder.deviceInfo.setCurrentInputIndex(input_comb.currentIndex);
 
-                    //if(recorder.input.isAvailableDevice(input_comb.currentText)){
-                    //    recorder.record(16000,input_comb.currentText);
-                    //}else{
-                    //    console.log("音频输入设备不可用，请重新选择");
-                    //}
+                    recorder.record(16000,input_comb.currentText);
                 }
             }
             MyButton{
                 text: "停止"
-                //onClicked: recorder.stop()
+                onClicked: recorder.stop()
             }
             MyButton{
                 text: "播放"

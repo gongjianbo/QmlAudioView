@@ -12,6 +12,7 @@ public:
     static void registerType(QQmlContext *)
     {
         //录音组件
+        qmlRegisterType<AudioRecorder>("GongJianBo",1,0,"AudioRecorder");
         qmlRegisterType<AudioRecorderView>("GongJianBo",1,0,"AudioRecorderView");
         qmlRegisterUncreatableType<AudioRecorderDevice>("GongJianBo",1,0,"AudioRecorderDevice",
                                                        "can not instantiate AudioRecorderDevice in qml");

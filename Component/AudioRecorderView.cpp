@@ -12,6 +12,16 @@
 AudioRecorderView::AudioRecorderView(QQuickItem *parent)
     : QQuickPaintedItem(parent)
 {
+    init();
+
+    //采样精度和声道数暂时默认16\1
+    audioFormat.setSampleRate(16000);
+    audioFormat.setChannelCount(1);
+    audioFormat.setSampleSize(16);
+    audioFormat.setCodec("audio/pcm");
+    audioFormat.setByteOrder(QAudioFormat::LittleEndian);
+    audioFormat.setSampleType(QAudioFormat::SignedInt);
+
     //刷新延时
     updateTimer.setSingleShot(true);
     connect(&updateTimer,&QTimer::timeout,this,[this]{
@@ -28,17 +38,17 @@ AudioRecorderView::AudioRecorderView(QQuickItem *parent)
 
 AudioRecorderView::~AudioRecorderView()
 {
-    //stop();
+    free();
 }
 
-void AudioRecorderView::setRecordState(AudioRecorderView::RecordState state)
+void AudioRecorderView::setRecordState(AudioRecorder::RecordState state)
 {
     if(recordState!=state)
     {
-        const RecordState old_state=getRecordState();
+        const AudioRecorder::RecordState old_state=getRecordState();
         recordState=state;
         //录制完成后展示全谱
-        if(old_state==Record){
+        if(old_state==AudioRecorder::Record){
             updateDataSample();
         }
         emit recordStateChanged();
@@ -46,7 +56,7 @@ void AudioRecorderView::setRecordState(AudioRecorderView::RecordState state)
     }
 }
 
-void AudioRecorderView::setDisplayMode(AudioRecorderView::DisplayMode mode)
+void AudioRecorderView::setDisplayMode(AudioRecorder::DisplayMode mode)
 {
     if(displayMode!=mode){
         displayMode=mode;
@@ -60,18 +70,27 @@ void AudioRecorderView::record(int sampleRate, const QString &deviceName)
     //先stop当前操作、清空数据，再开始录制操作
     audioData.clear();
     sampleData.clear();
+    //duration、position=0；
     //预置状态，待operate更新后再同步
-    setRecordState(RecordState);
+    setRecordState(AudioRecorder::Record);
+
+    audioFormat.setSampleRate(sampleRate);
+    const QAudioDeviceInfo device_info=deviceInfo.getInputInfo(deviceName);
+    emit requestRecord(device_info,audioFormat);
 }
 
 void AudioRecorderView::stop()
 {
-
+    //预置状态，待operate更新后再同步
+    setRecordState(AudioRecorder::Stop);
+    emit requestStop();
 }
 
 void AudioRecorderView::play(const QString &deviceName)
 {
-
+    //先判断暂停继续，非暂停再stop后播放，无数据则stop
+    const QAudioDeviceInfo device_info=deviceInfo.getOutputInfo(deviceName);
+    emit requestPlay(device_info);
 }
 
 void AudioRecorderView::suspendPlay()
@@ -171,6 +190,36 @@ void AudioRecorderView::geometryChanged(const QRectF &newGeometry, const QRectF 
     refresh();
 }
 
+void AudioRecorderView::init()
+{
+    qRegisterMetaType<QAudioDeviceInfo>("QAudioDeviceInfo");
+    qRegisterMetaType<QList<QAudioDeviceInfo>>("QList<QAudioDeviceInfo>");
+    qRegisterMetaType<AudioRecorder::RecordState>("AudioRecorder::RecordState");
+
+    ioThread=new QThread(this);
+    ioOperate=new AudioRecorderOperate;
+    ioOperate->moveToThread(ioThread);
+
+    connect(ioThread,&QThread::started,ioOperate,&AudioRecorderOperate::init);
+    connect(ioThread,&QThread::finished,ioOperate,&QObject::deleteLater);
+    //通过信号槽来调用
+    connect(this,&AudioRecorderView::requestRecord,ioOperate,&AudioRecorderOperate::doRecord);
+    connect(this,&AudioRecorderView::requestStop,ioOperate,&AudioRecorderOperate::doStop);
+    connect(this,&AudioRecorderView::requestPlay,ioOperate,&AudioRecorderOperate::doPlay);
+    connect(this,&AudioRecorderView::requestSuspendPlay,ioOperate,&AudioRecorderOperate::doSuspendPlay);
+    connect(this,&AudioRecorderView::requestResumePlay,ioOperate,&AudioRecorderOperate::doResumePlay);
+    connect(ioOperate,&AudioRecorderOperate::recordStateChanged,this,&AudioRecorderView::setRecordState);
+    connect(ioOperate,&AudioRecorderOperate::dataChanged,this,&AudioRecorderView::recvData);
+
+    ioThread->start();
+}
+
+void AudioRecorderView::free()
+{
+    ioThread->quit();
+    ioThread->wait();
+}
+
 int AudioRecorderView::plotAreaWidth() const
 {
     return (width()-leftPadding-rightPadding);
@@ -192,9 +241,10 @@ void AudioRecorderView::updateDataSample()
     //根据模式切换显示的数据范围，暂时固定值
     //s*channel*sampleRate
     int data_show=data_count/2;
-    if(getDisplayMode()==Tracking&&getRecordState()==Record){
+    if(getDisplayMode()==AudioRecorder::Tracking&&
+            getRecordState()==AudioRecorder::Record){
         //单通道时5s的范围滚动
-        const int max_show=5*1*16000;//audioInput.inputFormat.sampleRate();
+        const int max_show=5*1*audioFormat.sampleRate();
         if(data_show>max_show)
             data_show=max_show;
     }
@@ -289,4 +339,11 @@ void AudioRecorderView::refresh()
         //未结束则重新start
         updateTimer.start(30);
     }
+}
+
+void AudioRecorderView::recvData(const QByteArray &data)
+{
+    audioData.append(data);
+    updateDataSample();
+    refresh();
 }

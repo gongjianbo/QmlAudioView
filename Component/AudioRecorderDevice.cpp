@@ -12,8 +12,6 @@
 
 AudioRecorderDevice::AudioRecorderDevice(QObject *parent) : QObject(parent)
 {
-    qRegisterMetaType<QList<QAudioDeviceInfo>>("QList<QAudioDeviceInfo>");
-
     //connect(&futureWatcher,&QFutureWatcher::finished,this,[this](){});
     //更新了设备列表
     connect(this,&AudioRecorderDevice::inputDeviceInfosUpdated,
@@ -81,6 +79,18 @@ void AudioRecorderDevice::resetCurrentInput()
     currentInputDeviceInfo=QAudioDeviceInfo::defaultInputDevice();
 }
 
+QAudioDeviceInfo AudioRecorderDevice::getInputInfo(const QString &name) const
+{
+    if(name.isEmpty()||currentInputDeviceInfo.deviceName()==name)
+        return currentInputDeviceInfo;
+    for(auto &info:enableInputDeviceInfos){
+        if(info.deviceName()==name){
+            return info;
+        }
+    }
+    return QAudioDeviceInfo::defaultInputDevice();
+}
+
 bool AudioRecorderDevice::setCurrentOutputName(const QString &name)
 {
     for(auto &info:enableOutputDeviceInfos){
@@ -104,6 +114,18 @@ bool AudioRecorderDevice::setCurrentOutputIndex(int index)
 void AudioRecorderDevice::resetCurrentOutput()
 {
     currentOutputDeviceInfo=QAudioDeviceInfo::defaultOutputDevice();
+}
+
+QAudioDeviceInfo AudioRecorderDevice::getOutputInfo(const QString &name) const
+{
+    if(name.isEmpty()||name==currentOutputDeviceInfo.deviceName())
+        return currentOutputDeviceInfo;
+    for(auto &info:enableOutputDeviceInfos){
+        if(info.deviceName()==name){
+            return info;
+        }
+    }
+    return QAudioDeviceInfo::defaultOutputDevice();
 }
 
 void AudioRecorderDevice::setInputDeviceInfos(const QList<QAudioDeviceInfo> &infos)

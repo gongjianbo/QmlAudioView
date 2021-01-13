@@ -21,7 +21,11 @@
  * 5.播放时先设置deviceinfo
  *
  * @note
- * 设备插拔时，可能会卡死应用，待测试
+ * 1.获取输入设备名重复是插件问题，在新版本可以判断插件（如5.15）
+ * 参见：（Qt4）QTBUG-16841（Qt5）QTBUG-75781
+ * 暂时用采样率来过滤输入设备
+ * 2.插拔设备后，deviceInfo不相等了
+ * 3.设备插拔时，可能会卡死应用，待测试
  */
 class AudioRecorderDevice : public QObject,
         public QAbstractNativeEventFilter
@@ -49,6 +53,8 @@ public:
     Q_INVOKABLE bool setCurrentInputName(const QString &name);
     Q_INVOKABLE bool setCurrentInputIndex(int index);
     Q_INVOKABLE void resetCurrentInput();
+    //获取输入设备信息，devicename为空则用currentinfo
+    QAudioDeviceInfo getInputInfo(const QString &name) const;
 
     //当前选中的输出设备
     QString getCurrentOutputName() const { return currentOutputDeviceInfo.deviceName(); }
@@ -56,6 +62,8 @@ public:
     Q_INVOKABLE bool setCurrentOutputName(const QString &name);
     Q_INVOKABLE bool setCurrentOutputIndex(int index);
     Q_INVOKABLE void resetCurrentOutput();
+    //获取输出设备信息，devicename为空则用currentinfo
+    QAudioDeviceInfo getOutputInfo(const QString &name) const;
 
     //输入设备列表
     void setInputDeviceInfos(const QList<QAudioDeviceInfo> &infos);

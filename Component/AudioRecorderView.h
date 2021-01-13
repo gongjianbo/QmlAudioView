@@ -5,8 +5,10 @@
 #include <QDateTime>
 #include <QTimer>
 #include <QElapsedTimer>
+#include <QThread>
 
 #include "AudioRecorderDevice.h"
+#include "AudioRecorderOperate.h"
 
 /**
  * @brief 录音可视化组件
@@ -20,12 +22,15 @@
  * @note
  * 1.在初版逻辑的基础上引入线程进程来录制和播放
  * 2.没有border属性，可以在外层嵌套一层rect
+ * 3.操作时，先预置本地状态再通知线程执行对应操作
+ *   线程返回的数据先判断当前状态是否符合，
+ *   直接用锁还是用信号槽？先用信号槽完成功能
  */
 class AudioRecorderView : public QQuickPaintedItem
 {
     Q_OBJECT
-    Q_PROPERTY(AudioRecorderView::RecordState recordState READ getRecordState NOTIFY recordStateChanged)
-    Q_PROPERTY(AudioRecorderView::DisplayMode displayMode READ getDisplayMode WRITE setDisplayMode NOTIFY displayModeChanged)
+    Q_PROPERTY(AudioRecorder::RecordState recordState READ getRecordState NOTIFY recordStateChanged)
+    Q_PROPERTY(AudioRecorder::DisplayMode displayMode READ getDisplayMode WRITE setDisplayMode NOTIFY displayModeChanged)
     Q_PROPERTY(AudioRecorderDevice *deviceInfo READ getDeviceInfo CONSTANT)
     //目前这些属性不会触发交互，暂时用member，在初始化时设置
     Q_PROPERTY(int leftPadding MEMBER leftPadding)
@@ -41,33 +46,16 @@ class AudioRecorderView : public QQuickPaintedItem
     Q_PROPERTY(QColor axisColor MEMBER axisColor)
     Q_PROPERTY(QColor textColor MEMBER textColor)
 public:
-    //状态
-    enum RecordState
-    {
-        Stop       //默认停止状态
-        ,Playing   //播放
-        ,PlayPause //播放暂停
-        ,Record    //录制
-    };
-    Q_ENUMS(RecordState)
-    //显示模式
-    enum DisplayMode
-    {
-        FullRange  //绘制全部数据
-        ,Tracking  //跟踪最新数据
-    };
-    Q_ENUMS(DisplayMode)
-public:
     explicit AudioRecorderView(QQuickItem *parent = nullptr);
     ~AudioRecorderView();
 
     //录制状态
-    AudioRecorderView::RecordState getRecordState() const { return recordState; }
-    void setRecordState(AudioRecorderView::RecordState state);
+    AudioRecorder::RecordState getRecordState() const { return recordState; }
+    void setRecordState(AudioRecorder::RecordState state);
 
     //绘制模式，目前仅对录制有效，播放时展示全谱
-    AudioRecorderView::DisplayMode getDisplayMode() const { return displayMode; }
-    void setDisplayMode(AudioRecorderView::DisplayMode mode);
+    AudioRecorder::DisplayMode getDisplayMode() const { return displayMode; }
+    void setDisplayMode(AudioRecorder::DisplayMode mode);
 
     //设备信息
     AudioRecorderDevice *getDeviceInfo() { return &deviceInfo; }
@@ -90,6 +78,9 @@ protected:
     void paint(QPainter *painter) override;
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
 
+    //初始化输入输出等
+    void init();
+    void free();
     //去掉padding的宽高
     int plotAreaWidth() const;
     int plotAreaHeight() const;
@@ -102,16 +93,28 @@ protected:
 signals:
     void recordStateChanged();
     void displayModeChanged();
+    //录制
+    void requestRecord(const QAudioDeviceInfo &device, const QAudioFormat &format);
+    //停止录制/播放
+    void requestStop();
+    //播放
+    void requestPlay(const QAudioDeviceInfo &device);
+    //暂停播放
+    void requestSuspendPlay();
+    //暂停恢复
+    void requestResumePlay();
 
 public slots:
     //刷新，调用update
     void refresh();
+    //添加数据
+    void recvData(const QByteArray &data);
 
 private:
     //当前状态
-    RecordState recordState=Stop;
+    AudioRecorder::RecordState recordState=AudioRecorder::Stop;
     //绘制模式
-    DisplayMode displayMode=Tracking;
+    AudioRecorder::DisplayMode displayMode=AudioRecorder::Tracking;
     //刷新定时器
     QTimer updateTimer;
     //刷新间隔
@@ -119,6 +122,12 @@ private:
 
     //设备信息
     AudioRecorderDevice deviceInfo;
+    //格式参数
+   QAudioFormat audioFormat;
+    //输入输出放到线程处理
+    QThread *ioThread=nullptr;
+    //输入输出操作管理，置于线程中
+    AudioRecorderOperate *ioOperate=nullptr;
 
     //四个边距
     //该版本刻度是一体的，所以刻度的宽高也算在padding里
@@ -137,7 +146,7 @@ private:
     //网格颜色
     QColor gridColor=QColor(120,120,120);
     //曲线颜色
-    QColor seriesColor=QColor("#083B95");
+    QColor seriesColor=QColor("#1F8FFF");
     //游标颜色
     QColor cursorColor=QColor("#FF385E");
     //刻度轴颜色
