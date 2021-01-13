@@ -127,11 +127,17 @@ Item {
             //    text: "恢复"
             //    onClicked: recorder.resumePlay()
             //}
+            Item{
+                width: 20
+                height: 20
+            }
             MyButton{
+                enabled: (recorder.recordState===AudioRecorderView.Stop)&&recorder.hasData
                 text: "保存文件"
                 onClicked: recorder.saveToFile("./save.wav")
             }
             MyButton{
+                enabled: (recorder.recordState===AudioRecorderView.Stop)
                 text: "加载文件"
                 onClicked: recorder.loadFromFile("./save.wav")
             }
