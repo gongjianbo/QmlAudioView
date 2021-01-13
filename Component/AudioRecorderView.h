@@ -32,6 +32,11 @@ class AudioRecorderView : public QQuickPaintedItem
     Q_PROPERTY(AudioRecorder::RecordState recordState READ getRecordState NOTIFY recordStateChanged)
     Q_PROPERTY(AudioRecorder::DisplayMode displayMode READ getDisplayMode WRITE setDisplayMode NOTIFY displayModeChanged)
     Q_PROPERTY(AudioRecorderDevice *deviceInfo READ getDeviceInfo CONSTANT)
+    Q_PROPERTY(qint64 duration READ getDuration NOTIFY durationChanged)
+    Q_PROPERTY(QString durationString READ getDurationString NOTIFY durationChanged)
+    Q_PROPERTY(qint64 position READ getPosition NOTIFY positionChanged)
+    Q_PROPERTY(QString positionString READ getPositionString NOTIFY positionChanged)
+    Q_PROPERTY(bool hasRecordData READ getHasRecordData NOTIFY hasRecordDataChanged)
     //目前这些属性不会触发交互，暂时用member，在初始化时设置
     Q_PROPERTY(int leftPadding MEMBER leftPadding)
     Q_PROPERTY(int rightPadding MEMBER rightPadding)
@@ -59,6 +64,21 @@ public:
 
     //设备信息
     AudioRecorderDevice *getDeviceInfo() { return &deviceInfo; }
+
+    //当前数据的总时长ms
+     qint64 getDuration() const { return audioDuration; }
+     void setDuration(qint64 duration);
+     //将duration毫秒数转为时分秒格式
+     QString getDurationString() const;
+
+     //当前播放或者录制的时间ms
+     qint64 getPosition() const { return audioPostion; }
+     void setPosition(qint64 position);
+     QString getPositionString() const;
+
+     //当前是否有数据
+     bool getHasRecordData() const;
+     void setHasRecordData(bool has);
 
     //录制
     //sampleRate:输入采样率
@@ -93,6 +113,9 @@ protected:
 signals:
     void recordStateChanged();
     void displayModeChanged();
+    void durationChanged();
+    void positionChanged();
+    void hasRecordDataChanged();
     //录制
     void requestRecord(const QAudioDeviceInfo &device, const QAudioFormat &format);
     //停止录制/播放
@@ -172,6 +195,16 @@ private:
     QList<SamplePoint> sampleData;
     //完整的音频数据
     QByteArray audioData;
+    //是否有录制的数据
+    bool hasRecordData=false;
+    //输出数据计数，对应read/write接口
+    //qint64 outputCount=0;
+    //播放数据计数，对应ui游标/audioOutput->processedUSecs()
+    qint64 audioCursor=0;
+    //数据时长ms
+    qint64 audioDuration=0;
+    //播放或者录制时长ms
+    qint64 audioPostion=0;
 };
 
 #endif // AUDIORECORDERVIEW_H

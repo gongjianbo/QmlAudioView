@@ -22,8 +22,8 @@ public:
 
     //开始录音
     //buffer:回调处理数据
-    //format:音频参数QAudioFormat，内部获取需要的成员值
     //device:输入设备信息
+    //format:音频参数QAudioFormat，内部获取需要的成员值
     bool startRecord(AudioRecorderBuffer *buffer, const QAudioDeviceInfo &device, const QAudioFormat &format);
     //结束录制
     void stopRecord();

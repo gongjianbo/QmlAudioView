@@ -56,15 +56,15 @@ Item {
             }
             Label{
                 anchors.verticalCenter: parent.verticalCenter
-                text: "[duration]:"//+recorder.durationString
+                text: "[duration]:"+recorder.durationString
             }
             Label{
                 anchors.verticalCenter: parent.verticalCenter
-                text: "[position]:"//+recorder.positionString
+                text: "[position]:"+recorder.positionString
             }
             Label{
                 anchors.verticalCenter: parent.verticalCenter
-                text: "[state]:"//+recorder.recordState
+                text: "[state]:"+recorder.recordState
             }
         }
 
@@ -78,7 +78,6 @@ Item {
                     if(input_comb.currentIndex<0)
                         return;
                     recorder.deviceInfo.setCurrentInputIndex(input_comb.currentIndex);
-
                     recorder.record(16000,input_comb.currentText);
                 }
             }
@@ -94,18 +93,16 @@ Item {
                     if(output_comb.currentIndex<0)
                         return;
                     recorder.deviceInfo.setCurrentOutputIndex(output_comb.currentIndex);
-
-                    //recorder.output.resetToDefaultDevice();
-                    //recorder.play(output_comb.currentText);
+                    recorder.play(output_comb.currentText);
                 }
             }
             MyButton{
                 text: "暂停"
-                //onClicked: recorder.suspendPlay()
+                onClicked: recorder.suspendPlay()
             }
             MyButton{
                 text: "恢复"
-                //onClicked: recorder.resumePlay()
+                onClicked: recorder.resumePlay()
             }
             MyButton{
                 text: "保存文件"

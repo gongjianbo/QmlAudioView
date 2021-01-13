@@ -28,6 +28,9 @@ AudioRecorderView::AudioRecorderView(QQuickItem *parent)
         update();
     });
 
+    //抽样点绘制
+    sampleData.reserve(10000); //预置元素内存
+
     //不可见后stop
     connect(this,&AudioRecorderView::visibleChanged,this,[this]{
         if(!isVisible()){
@@ -65,12 +68,54 @@ void AudioRecorderView::setDisplayMode(AudioRecorder::DisplayMode mode)
     }
 }
 
+void AudioRecorderView::setDuration(qint64 duration)
+{
+    if(audioDuration!=duration){
+        audioDuration=duration;
+        emit durationChanged();
+    }
+}
+
+QString AudioRecorderView::getDurationString() const
+{
+    return QTime(0,0).addMSecs(audioDuration).toString("hh:mm:ss");
+}
+
+void AudioRecorderView::setPosition(qint64 position)
+{
+    if(audioPostion!=position){
+        audioPostion=position;
+        emit positionChanged();
+    }
+}
+
+QString AudioRecorderView::getPositionString() const
+{
+    return QTime(0,0).addMSecs(audioPostion).toString("hh:mm:ss");
+}
+
+bool AudioRecorderView::getHasRecordData() const
+{
+    return hasRecordData;
+}
+
+void AudioRecorderView::setHasRecordData(bool has)
+{
+    if(hasRecordData!=has){
+        hasRecordData=has;
+        emit hasRecordDataChanged();
+    }
+}
+
 void AudioRecorderView::record(int sampleRate, const QString &deviceName)
 {
     //先stop当前操作、清空数据，再开始录制操作
     audioData.clear();
     sampleData.clear();
-    //duration、position=0；
+    audioCursor=0;
+    setDuration(0);
+    setPosition(0);
+    setHasRecordData(0);
     //预置状态，待operate更新后再同步
     setRecordState(AudioRecorder::Record);
 
@@ -89,18 +134,21 @@ void AudioRecorderView::stop()
 void AudioRecorderView::play(const QString &deviceName)
 {
     //先判断暂停继续，非暂停再stop后播放，无数据则stop
+    setRecordState(AudioRecorder::Playing);
     const QAudioDeviceInfo device_info=deviceInfo.getOutputInfo(deviceName);
     emit requestPlay(device_info);
 }
 
 void AudioRecorderView::suspendPlay()
 {
-
+    setRecordState(AudioRecorder::PlayPause);
+    emit requestSuspendPlay();
 }
 
 void AudioRecorderView::resumePlay()
 {
-
+    setRecordState(AudioRecorder::Playing);
+    emit requestResumePlay();
 }
 
 void AudioRecorderView::paint(QPainter *painter)
@@ -152,7 +200,7 @@ void AudioRecorderView::paint(QPainter *painter)
 
         //画游标
         painter->setPen(cursorColor);
-        const int play_pos=double(0)/audioData.count()*view_width+leftPadding; //playCount=0
+        const int play_pos=double(audioCursor)/audioData.count()*view_width+leftPadding;
         painter->drawLine(play_pos,topPadding,
                           play_pos,height()-bottomPadding);
     }
@@ -210,6 +258,12 @@ void AudioRecorderView::init()
     connect(this,&AudioRecorderView::requestResumePlay,ioOperate,&AudioRecorderOperate::doResumePlay);
     connect(ioOperate,&AudioRecorderOperate::recordStateChanged,this,&AudioRecorderView::setRecordState);
     connect(ioOperate,&AudioRecorderOperate::dataChanged,this,&AudioRecorderView::recvData);
+    connect(ioOperate,&AudioRecorderOperate::durationChanged,this,&AudioRecorderView::setDuration);
+    connect(ioOperate,&AudioRecorderOperate::positionChanged,this,&AudioRecorderView::setPosition);
+    connect(ioOperate,&AudioRecorderOperate::cursorChanged,this,[this](qint64 cursor){
+        audioCursor=cursor;
+        refresh();
+    });
 
     ioThread->start();
 }
@@ -344,6 +398,7 @@ void AudioRecorderView::refresh()
 void AudioRecorderView::recvData(const QByteArray &data)
 {
     audioData.append(data);
+    setHasRecordData(!audioData.isEmpty());
     updateDataSample();
     refresh();
 }

@@ -65,6 +65,7 @@ class AudioRecorder : public QObject
     Q_OBJECT
 public:
     //状态
+    //TODO增加中间态，即ui设置了，但是线程操作状态还没返回
     enum RecordState
     {
         Stop       //默认停止状态
