@@ -1,6 +1,5 @@
 #include "AudioRecorderOutput.h"
 
-#include <QCoreApplication>
 #include <QFileInfo>
 #include <QFile>
 #include <QDir>
@@ -9,7 +8,13 @@
 
 AudioRecorderOutput::AudioRecorderOutput(QObject *parent) : QObject(parent)
 {
-
+    //采样精度和声道数暂时默认16\1
+    outputFormat.setSampleRate(16000);
+    outputFormat.setChannelCount(1);
+    outputFormat.setSampleSize(16);
+    outputFormat.setCodec("audio/pcm");
+    outputFormat.setByteOrder(QAudioFormat::LittleEndian);
+    outputFormat.setSampleType(QAudioFormat::SignedInt);
 }
 
 AudioRecorderOutput::~AudioRecorderOutput()

@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include <QCoreApplication>
 #include <QPainter>
 #include <QFileInfo>
 #include <QFile>
@@ -30,6 +31,9 @@ AudioRecorderView::AudioRecorderView(QQuickItem *parent)
 
     //抽样点绘制
     sampleData.reserve(10000); //预置元素内存
+
+    //默认的缓存目录
+    setCacheDir(qApp->applicationDirPath()+"/AppData/Default/AudioRecorder");
 
     //不可见后stop
     connect(this,&AudioRecorderView::visibleChanged,this,[this]{
@@ -68,6 +72,14 @@ void AudioRecorderView::setDisplayMode(AudioRecorder::DisplayMode mode)
     }
 }
 
+void AudioRecorderView::setCacheDir(const QString &dir)
+{
+    if(cacheDir!=dir){
+        cacheDir=dir;
+        emit cacheDirChanged(dir);
+    }
+}
+
 void AudioRecorderView::setDuration(qint64 duration)
 {
     if(audioDuration!=duration){
@@ -94,16 +106,16 @@ QString AudioRecorderView::getPositionString() const
     return QTime(0,0).addMSecs(audioPostion).toString("hh:mm:ss");
 }
 
-bool AudioRecorderView::getHasRecordData() const
+bool AudioRecorderView::getHasData() const
 {
-    return hasRecordData;
+    return hasData;
 }
 
-void AudioRecorderView::setHasRecordData(bool has)
+void AudioRecorderView::setHasData(bool has)
 {
-    if(hasRecordData!=has){
-        hasRecordData=has;
-        emit hasRecordDataChanged();
+    if(hasData!=has){
+        hasData=has;
+        emit hasDataChanged();
     }
 }
 
@@ -115,7 +127,7 @@ void AudioRecorderView::record(int sampleRate, const QString &deviceName)
     audioCursor=0;
     setDuration(0);
     setPosition(0);
-    setHasRecordData(0);
+    setHasData(false);
     //预置状态，待operate更新后再同步
     setRecordState(AudioRecorder::Record);
 
@@ -149,6 +161,31 @@ void AudioRecorderView::resumePlay()
 {
     setRecordState(AudioRecorder::Playing);
     emit requestResumePlay();
+}
+
+void AudioRecorderView::loadFromFile(const QString &filepath)
+{
+    audioData.clear();
+    sampleData.clear();
+    audioCursor=0;
+    setDuration(0);
+    setPosition(0);
+    setHasData(false);
+    setRecordState(AudioRecorder::Stop);
+    emit requestLoadFile(filepath);
+}
+
+void AudioRecorderView::saveToFile(const QString &filepath)
+{
+    setRecordState(AudioRecorder::Stop);
+    emit requestSaveFile(filepath);
+}
+
+QString AudioRecorderView::saveToCache(const QString &uuid)
+{
+    const QString file_path=QString("%1/%2.wav").arg(getCacheDir()).arg(uuid);
+    saveToFile(file_path);
+    return file_path;
 }
 
 void AudioRecorderView::paint(QPainter *painter)
@@ -261,9 +298,14 @@ void AudioRecorderView::init()
     connect(ioOperate,&AudioRecorderOperate::durationChanged,this,&AudioRecorderView::setDuration);
     connect(ioOperate,&AudioRecorderOperate::positionChanged,this,&AudioRecorderView::setPosition);
     connect(ioOperate,&AudioRecorderOperate::cursorChanged,this,[this](qint64 cursor){
-        audioCursor=cursor;
+        if(audioCursor<cursor||cursor==0)
+            audioCursor=cursor;
         refresh();
     });
+    connect(this,&AudioRecorderView::requestLoadFile,ioOperate,&AudioRecorderOperate::doLoadFile);
+    connect(this,&AudioRecorderView::requestSaveFile,ioOperate,&AudioRecorderOperate::doSaveFile);
+    connect(ioOperate,&AudioRecorderOperate::loadFileFinished,this,&AudioRecorderView::loadFileFinished);
+    connect(ioOperate,&AudioRecorderOperate::saveFileFinished,this,&AudioRecorderView::saveFileFinished);
 
     ioThread->start();
 }
@@ -398,7 +440,7 @@ void AudioRecorderView::refresh()
 void AudioRecorderView::recvData(const QByteArray &data)
 {
     audioData.append(data);
-    setHasRecordData(!audioData.isEmpty());
+    setHasData(!audioData.isEmpty());
     updateDataSample();
     refresh();
 }

@@ -50,6 +50,8 @@ signals:
     void durationChanged(qint64 duration);
     void positionChanged(qint64 position);
     void cursorChanged(qint64 cursor);
+    void loadFileFinished(bool result);
+    void saveFileFinished(bool result);
 
 public slots:
     void init();
@@ -63,6 +65,10 @@ public slots:
     void doSuspendPlay();
     //暂停恢复
     void doResumePlay();
+    //读文件
+    void doLoadFile(const QString &filepath);
+    //写文件
+    void doSaveFile(const QString &filepath);
 
 private:
     //QAudioInput/Output处理数据时回调IODevice的接口

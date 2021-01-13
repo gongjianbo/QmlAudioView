@@ -6,7 +6,13 @@
 AudioRecorderInput::AudioRecorderInput(QObject *parent)
     : QObject(parent)
 {
-
+    //采样精度和声道数暂时默认16\1
+    inputFormat.setSampleRate(16000);
+    inputFormat.setChannelCount(1);
+    inputFormat.setSampleSize(16);
+    inputFormat.setCodec("audio/pcm");
+    inputFormat.setByteOrder(QAudioFormat::LittleEndian);
+    inputFormat.setSampleType(QAudioFormat::SignedInt);
 }
 
 AudioRecorderInput::~AudioRecorderInput()

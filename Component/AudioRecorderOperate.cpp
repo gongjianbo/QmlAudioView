@@ -203,3 +203,19 @@ void AudioRecorderOperate::doResumePlay()
     audioOutput->resumePlay();
     setRecordState(AudioRecorder::Playing);
 }
+
+void AudioRecorderOperate::doLoadFile(const QString &filepath)
+{
+    doStop();
+
+    const bool result=audioInput->loadFromFile(audioBuffer,filepath);
+    emit loadFileFinished(result);
+}
+
+void AudioRecorderOperate::doSaveFile(const QString &filepath)
+{
+    doStop();
+
+    const bool result=audioOutput->saveToFile(audioData,audioInput->inputFormat,filepath);
+    emit saveFileFinished(result);
+}

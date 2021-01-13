@@ -12,6 +12,12 @@ Item {
         anchors.fill: parent
         anchors.topMargin: btn_area.height+10
         radius: 4
+        onLoadFileFinished: {
+            console.log("load file finished",result);
+        }
+        onSaveFileFinished: {
+            console.log("save file finished",result);
+        }
     }
 
     Column{
@@ -23,6 +29,7 @@ Item {
             //测试时插了耳机笔记本就默认只有耳机的输入输出，没法测试多个io
             ComboBox{
                 id: input_comb
+                enabled: (recorder.recordState===AudioRecorderView.Stop)
                 width: 250
                 model: recorder.deviceInfo.inputDeviceNames
                 //可以保留点弹框刷新设备信息
@@ -40,6 +47,7 @@ Item {
             }
             ComboBox{
                 id: output_comb
+                enabled: (recorder.recordState===AudioRecorderView.Stop)
                 width: 250
                 model: recorder.deviceInfo.outputDeviceNames
                 //popup.onAboutToShow: {
@@ -71,6 +79,7 @@ Item {
         Row{
             spacing: 10
             MyButton{
+                enabled: (recorder.recordState!==AudioRecorder.Record)
                 text: "录制"
                 onClicked: {
                     //如果没有选择框，用默认的就reset deviceinfo
@@ -82,35 +91,49 @@ Item {
                 }
             }
             MyButton{
+                enabled: (recorder.recordState!==AudioRecorder.Stop)
                 text: "停止"
                 onClicked: recorder.stop()
             }
             MyButton{
-                text: "播放"
+                enabled: (recorder.recordState!==AudioRecorder.Record)&&recorder.hasData
+                property bool isPlaying: (recorder.recordState===AudioRecorder.Playing)
+                text: {
+                    switch(recorder.recordState)
+                    {
+                    case AudioRecorder.Playing: return "暂停";
+                    case AudioRecorder.PlayPause: return "继续";
+                    }
+                    return "播放";
+                }
                 onClicked: {
-                    //如果没有选择框，用默认的就reset deviceinfo
-                    //如果未选择正确的输出设备则弹框
-                    if(output_comb.currentIndex<0)
-                        return;
-                    recorder.deviceInfo.setCurrentOutputIndex(output_comb.currentIndex);
-                    recorder.play(output_comb.currentText);
+                    if(isPlaying){
+                        recorder.suspendPlay();
+                    }else{
+                        //如果没有选择框，用默认的就reset deviceinfo
+                        //如果未选择正确的输出设备则弹框
+                        if(output_comb.currentIndex<0)
+                            return;
+                        recorder.deviceInfo.setCurrentOutputIndex(output_comb.currentIndex);
+                        recorder.play(output_comb.currentText);
+                    }
                 }
             }
-            MyButton{
-                text: "暂停"
-                onClicked: recorder.suspendPlay()
-            }
-            MyButton{
-                text: "恢复"
-                onClicked: recorder.resumePlay()
-            }
+            //MyButton{
+            //    text: "暂停"
+            //    onClicked: recorder.suspendPlay()
+            //}
+            //MyButton{
+            //    text: "恢复"
+            //    onClicked: recorder.resumePlay()
+            //}
             MyButton{
                 text: "保存文件"
-                //onClicked: recorder.saveToFile("./save.wav")
+                onClicked: recorder.saveToFile("./save.wav")
             }
             MyButton{
                 text: "加载文件"
-                //onClicked: recorder.loadFromFile("./save.wav")
+                onClicked: recorder.loadFromFile("./save.wav")
             }
         }
     }

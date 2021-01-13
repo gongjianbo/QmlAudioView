@@ -32,11 +32,12 @@ class AudioRecorderView : public QQuickPaintedItem
     Q_PROPERTY(AudioRecorder::RecordState recordState READ getRecordState NOTIFY recordStateChanged)
     Q_PROPERTY(AudioRecorder::DisplayMode displayMode READ getDisplayMode WRITE setDisplayMode NOTIFY displayModeChanged)
     Q_PROPERTY(AudioRecorderDevice *deviceInfo READ getDeviceInfo CONSTANT)
+    Q_PROPERTY(QString cacheDir READ getCacheDir WRITE setCacheDir NOTIFY cacheDirChanged)
     Q_PROPERTY(qint64 duration READ getDuration NOTIFY durationChanged)
     Q_PROPERTY(QString durationString READ getDurationString NOTIFY durationChanged)
     Q_PROPERTY(qint64 position READ getPosition NOTIFY positionChanged)
     Q_PROPERTY(QString positionString READ getPositionString NOTIFY positionChanged)
-    Q_PROPERTY(bool hasRecordData READ getHasRecordData NOTIFY hasRecordDataChanged)
+    Q_PROPERTY(bool hasData READ getHasData NOTIFY hasDataChanged)
     //目前这些属性不会触发交互，暂时用member，在初始化时设置
     Q_PROPERTY(int leftPadding MEMBER leftPadding)
     Q_PROPERTY(int rightPadding MEMBER rightPadding)
@@ -65,20 +66,24 @@ public:
     //设备信息
     AudioRecorderDevice *getDeviceInfo() { return &deviceInfo; }
 
+    //缓存目录，配合不带路径的save函数
+    QString getCacheDir() const { return cacheDir; }
+    void setCacheDir(const QString &dir);
+
     //当前数据的总时长ms
-     qint64 getDuration() const { return audioDuration; }
-     void setDuration(qint64 duration);
-     //将duration毫秒数转为时分秒格式
-     QString getDurationString() const;
+    qint64 getDuration() const { return audioDuration; }
+    void setDuration(qint64 duration);
+    //将duration毫秒数转为时分秒格式
+    QString getDurationString() const;
 
-     //当前播放或者录制的时间ms
-     qint64 getPosition() const { return audioPostion; }
-     void setPosition(qint64 position);
-     QString getPositionString() const;
+    //当前播放或者录制的时间ms
+    qint64 getPosition() const { return audioPostion; }
+    void setPosition(qint64 position);
+    QString getPositionString() const;
 
-     //当前是否有数据
-     bool getHasRecordData() const;
-     void setHasRecordData(bool has);
+    //当前是否有数据
+    bool getHasData() const;
+    void setHasData(bool has);
 
     //录制
     //sampleRate:输入采样率
@@ -93,6 +98,18 @@ public:
     Q_INVOKABLE void suspendPlay();
     //暂停恢复
     Q_INVOKABLE void resumePlay();
+
+    //从文件读取
+    //目前不带解析器，只能解析44字节定长wav-pcm格式头
+    //（与本组件生成的wav文件格式一致）
+    Q_INVOKABLE void loadFromFile(const QString &filepath);
+
+    //保存到文件
+    Q_INVOKABLE void saveToFile(const QString &filepath);
+    //保存到cache路径
+    //（因为导入到音频库是以uuid为文件名，所以传入的文件名为uuid）
+    //return 完整路径
+    Q_INVOKABLE QString saveToCache(const QString &uuid);
 
 protected:
     void paint(QPainter *painter) override;
@@ -113,9 +130,10 @@ protected:
 signals:
     void recordStateChanged();
     void displayModeChanged();
+    void cacheDirChanged(const QString &dir);
     void durationChanged();
     void positionChanged();
-    void hasRecordDataChanged();
+    void hasDataChanged();
     //录制
     void requestRecord(const QAudioDeviceInfo &device, const QAudioFormat &format);
     //停止录制/播放
@@ -126,6 +144,11 @@ signals:
     void requestSuspendPlay();
     //暂停恢复
     void requestResumePlay();
+    //读写文件
+    void requestLoadFile(const QString &filepath);
+    void requestSaveFile(const QString &filepath);
+    void loadFileFinished(bool result);
+    void saveFileFinished(bool result);
 
 public slots:
     //刷新，调用update
@@ -146,11 +169,36 @@ private:
     //设备信息
     AudioRecorderDevice deviceInfo;
     //格式参数
-   QAudioFormat audioFormat;
+    QAudioFormat audioFormat;
     //输入输出放到线程处理
     QThread *ioThread=nullptr;
     //输入输出操作管理，置于线程中
     AudioRecorderOperate *ioOperate=nullptr;
+
+    //表示一个绘制用的抽样点信息
+    struct SamplePoint
+    {
+        //目前是没有滚轮缩放的
+        //暂时抽样时就把像素位置算好了
+        int x; //像素坐标，相对于横轴0点
+        int y; //像素坐标，相对于横轴0点
+    };
+    //绘制的抽样数据
+    QList<SamplePoint> sampleData;
+    //完整的音频数据
+    QByteArray audioData;
+    //是否有数据
+    bool hasData=false;
+    //输出数据计数，对应read/write接口
+    //qint64 outputCount=0;
+    //播放数据计数，对应ui游标/audioOutput->processedUSecs()
+    qint64 audioCursor=0;
+    //数据时长ms
+    qint64 audioDuration=0;
+    //播放或者录制时长ms
+    qint64 audioPostion=0;
+    //临时数据缓存目录
+    QString cacheDir;
 
     //四个边距
     //该版本刻度是一体的，所以刻度的宽高也算在padding里
@@ -182,29 +230,6 @@ private:
     double y1ValueToPx=1;
     double yRefPxSpace=40;
     int yValueSpace=1000;
-
-    //表示一个绘制用的抽样点信息
-    struct SamplePoint
-    {
-        //目前是没有滚轮缩放的
-        //暂时抽样时就把像素位置算好了
-        int x; //像素坐标，相对于横轴0点
-        int y; //像素坐标，相对于横轴0点
-    };
-    //绘制的抽样数据
-    QList<SamplePoint> sampleData;
-    //完整的音频数据
-    QByteArray audioData;
-    //是否有录制的数据
-    bool hasRecordData=false;
-    //输出数据计数，对应read/write接口
-    //qint64 outputCount=0;
-    //播放数据计数，对应ui游标/audioOutput->processedUSecs()
-    qint64 audioCursor=0;
-    //数据时长ms
-    qint64 audioDuration=0;
-    //播放或者录制时长ms
-    qint64 audioPostion=0;
 };
 
 #endif // AUDIORECORDERVIEW_H

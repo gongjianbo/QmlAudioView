@@ -36,10 +36,6 @@ public:
 
     //保存到文件
     bool saveToFile(const QByteArray data,const QAudioFormat &format,const QString &filepath);
-    //保存到cache路径
-    //（因为导入到音频库是以uuid为文件名，所以传入的文件名为uuid）
-    //return 完整路径，路径为空则保存失败
-    //QString saveToCache(const QByteArray data,const QAudioFormat &format,const QString &uuid);
 
 signals:
     void stateChanged(QAudio::State state);
