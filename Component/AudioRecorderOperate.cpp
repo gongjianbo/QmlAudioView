@@ -66,7 +66,6 @@ void AudioRecorderOperate::calcDuration()
         //s time*1000=ms time
         duration=(audioData.size()/2)/(1.0*sample_rate)*1000;
     }
-
     if(audioDuration!=duration){
         audioDuration=duration;
         emit durationChanged(duration);
@@ -208,8 +207,11 @@ void AudioRecorderOperate::doLoadFile(const QString &filepath)
 {
     doStop();
 
+    audioData.clear();
+    audioDuration=0;
+    audioPostion=0;
     const bool result=audioInput->loadFromFile(audioBuffer,filepath);
-    emit loadFileFinished(result);
+    emit loadFileFinished(filepath,result);
 }
 
 void AudioRecorderOperate::doSaveFile(const QString &filepath)
@@ -217,5 +219,5 @@ void AudioRecorderOperate::doSaveFile(const QString &filepath)
     doStop();
 
     const bool result=audioOutput->saveToFile(audioData,audioInput->inputFormat,filepath);
-    emit saveFileFinished(result);
+    emit saveFileFinished(filepath,result);
 }

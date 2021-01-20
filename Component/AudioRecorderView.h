@@ -147,14 +147,16 @@ signals:
     //读写文件
     void requestLoadFile(const QString &filepath);
     void requestSaveFile(const QString &filepath);
-    void loadFileFinished(bool result);
-    void saveFileFinished(bool result);
+    void loadFileFinished(const QString &filepath,bool result);
+    void saveFileFinished(const QString &filepath,bool result);
 
 public slots:
     //刷新，调用update
     void refresh();
     //添加数据
     void recvData(const QByteArray &data);
+    //线程中的operate更新了状态，加定时器延时避免多次切换闪烁
+    void updateRecordState(AudioRecorder::RecordState state);
 
 private:
     //当前状态
@@ -165,6 +167,9 @@ private:
     QTimer updateTimer;
     //刷新间隔
     QElapsedTimer updateElapse;
+    //operate状态更新
+    QTimer stateTimer;
+    AudioRecorder::RecordState stateTemp;
 
     //设备信息
     AudioRecorderDevice deviceInfo;

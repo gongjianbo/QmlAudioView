@@ -50,8 +50,8 @@ signals:
     void durationChanged(qint64 duration);
     void positionChanged(qint64 position);
     void cursorChanged(qint64 cursor);
-    void loadFileFinished(bool result);
-    void saveFileFinished(bool result);
+    void loadFileFinished(const QString &filepath,bool result);
+    void saveFileFinished(const QString &filepath,bool result);
 
 public slots:
     void init();

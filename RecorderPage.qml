@@ -29,25 +29,34 @@ Item {
             //测试时插了耳机笔记本就默认只有耳机的输入输出，没法测试多个io
             ComboBox{
                 id: input_comb
-                enabled: (recorder.recordState===AudioRecorderView.Stop)
+                enabled: (recorder.recordState===AudioRecorder.Stop)
                 width: 250
                 model: recorder.deviceInfo.inputDeviceNames
                 //可以保留点弹框刷新设备信息
-                //popup.onAboutToShow: {
-                //    recorder.deviceInfo.updateDeviceInfos();
-                //}
+                popup.onAboutToShow: {
+                    recorder.deviceInfo.updateDeviceInfos();
+                }
                 onModelChanged: {
                     console.log("input device name list changed")
                     let index=find(recorder.deviceInfo.currentInputName);
                     if(index>-1){
                         //如果在播放或录制则终止，并弹框提示
                         currentIndex=index;
+                    }else{
+                        //正在使用的输入设备变更
+                        let is_record=(recorder.recordState===AudioRecorderView.Record);
+                        //如果为录制状态则弹出save对话框
+                        if(!is_record)
+                            return;
+                        recorder.stop();
+                        //根据对话框操作进行后续
+                        //save_dialog.open();
                     }
                 }
             }
             ComboBox{
                 id: output_comb
-                enabled: (recorder.recordState===AudioRecorderView.Stop)
+                enabled: (recorder.recordState===AudioRecorder.Stop)
                 width: 250
                 model: recorder.deviceInfo.outputDeviceNames
                 //popup.onAboutToShow: {
@@ -93,9 +102,18 @@ Item {
             MyButton{
                 enabled: (recorder.recordState!==AudioRecorder.Stop)
                 text: "停止"
-                onClicked: recorder.stop()
+                onClicked: {
+                    let is_record=(recorder.recordState===AudioRecorder.Record);
+                    recorder.stop();
+                    //如果为录制状态则弹出save对话框
+                    if(!is_record)
+                        return;
+                    //根据对话框操作进行后续
+                    //save_dialog.open();
+                }
             }
             MyButton{
+                id: btn_play
                 enabled: (recorder.recordState!==AudioRecorder.Record)&&recorder.hasData
                 property bool isPlaying: (recorder.recordState===AudioRecorder.Playing)
                 text: {
@@ -118,6 +136,18 @@ Item {
                         recorder.play(output_comb.currentText);
                     }
                 }
+
+                //把按钮空格响应去掉后可以关联快捷键
+                //Shortcut{
+                //    autoRepeat: false
+                //    enabled: visible
+                //    sequence: "space"
+                //    onActivated: {
+                //        //空格键播放
+                //        if((recorder.recordState!==AudioRecorder.Record))
+                //            btn_play.clicked();
+                //    }
+                //}
             }
             //MyButton{
             //    text: "暂停"
