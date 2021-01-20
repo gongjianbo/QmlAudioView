@@ -29,12 +29,6 @@ AudioRecorderView::AudioRecorderView(QQuickItem *parent)
         update();
     });
 
-    //operate更新的状态延时
-    stateTimer.setSingleShot(true);
-    connect(&stateTimer,&QTimer::timeout,this,[this]{
-        setRecordState(stateTemp);
-    });
-
     //抽样点绘制
     sampleData.reserve(10000); //预置元素内存
 
@@ -299,7 +293,7 @@ void AudioRecorderView::init()
     connect(this,&AudioRecorderView::requestPlay,ioOperate,&AudioRecorderOperate::doPlay);
     connect(this,&AudioRecorderView::requestSuspendPlay,ioOperate,&AudioRecorderOperate::doSuspendPlay);
     connect(this,&AudioRecorderView::requestResumePlay,ioOperate,&AudioRecorderOperate::doResumePlay);
-    connect(ioOperate,&AudioRecorderOperate::recordStateChanged,this,&AudioRecorderView::updateRecordState);
+    connect(ioOperate,&AudioRecorderOperate::recordStateChanged,this,&AudioRecorderView::setRecordState);
     connect(ioOperate,&AudioRecorderOperate::dataChanged,this,&AudioRecorderView::recvData);
     connect(ioOperate,&AudioRecorderOperate::durationChanged,this,&AudioRecorderView::setDuration);
     connect(ioOperate,&AudioRecorderOperate::positionChanged,this,&AudioRecorderView::setPosition);
@@ -449,10 +443,4 @@ void AudioRecorderView::recvData(const QByteArray &data)
     setHasData(!audioData.isEmpty());
     updateDataSample();
     refresh();
-}
-
-void AudioRecorderView::updateRecordState(AudioRecorder::RecordState state)
-{
-    stateTemp=state;
-    stateTimer.start(500);
 }

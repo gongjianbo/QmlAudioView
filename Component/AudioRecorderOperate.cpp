@@ -129,21 +129,7 @@ void AudioRecorderOperate::init()
     });
 }
 
-void AudioRecorderOperate::doRecord(const QAudioDeviceInfo &device, const QAudioFormat &format)
-{
-    doStop();
-    //录制时清空数据缓存
-    audioData.clear();
-
-    if(audioInput->startRecord(audioBuffer,device,format)){
-        //切换为录制状态
-        setRecordState(AudioRecorder::Record);
-    }else{
-        qDebug()<<"录制失败";
-    }
-}
-
-void AudioRecorderOperate::doStop()
+void AudioRecorderOperate::stop(bool update)
 {
     //录制、播放时都会调用stop，所以把一些状态重置放这里
     //(停止的时候audioData的数据保留，在start时才清空)
@@ -162,8 +148,29 @@ void AudioRecorderOperate::doStop()
     default:
         break;
     }
-    setRecordState(AudioRecorder::Stop);
+    if(update){
+        setRecordState(AudioRecorder::Stop);
+    }
     calcPosition();
+}
+
+void AudioRecorderOperate::doRecord(const QAudioDeviceInfo &device, const QAudioFormat &format)
+{
+    stop();
+    //录制时清空数据缓存
+    audioData.clear();
+
+    if(audioInput->startRecord(audioBuffer,device,format)){
+        //切换为录制状态
+        setRecordState(AudioRecorder::Record);
+    }else{
+        qDebug()<<"录制失败";
+    }
+}
+
+void AudioRecorderOperate::doStop()
+{
+    stop(true);
 }
 
 void AudioRecorderOperate::doPlay(const QAudioDeviceInfo &device)
@@ -173,7 +180,7 @@ void AudioRecorderOperate::doPlay(const QAudioDeviceInfo &device)
         doResumePlay();
         return;
     }
-    doStop();
+    stop();
 
     if(audioData.isEmpty())
         return;
@@ -205,7 +212,7 @@ void AudioRecorderOperate::doResumePlay()
 
 void AudioRecorderOperate::doLoadFile(const QString &filepath)
 {
-    doStop();
+    stop();
 
     audioData.clear();
     audioDuration=0;
@@ -216,7 +223,7 @@ void AudioRecorderOperate::doLoadFile(const QString &filepath)
 
 void AudioRecorderOperate::doSaveFile(const QString &filepath)
 {
-    doStop();
+    stop();
 
     const bool result=audioOutput->saveToFile(audioData,audioInput->inputFormat,filepath);
     emit saveFileFinished(filepath,result);
