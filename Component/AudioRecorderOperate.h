@@ -55,6 +55,7 @@ signals:
 
 public slots:
     void init();
+    void stop(bool update=false);
     //录制
     void doRecord(const QAudioDeviceInfo &device, const QAudioFormat &format);
     //停止录制/播放

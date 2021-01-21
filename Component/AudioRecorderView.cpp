@@ -23,18 +23,6 @@ AudioRecorderView::AudioRecorderView(QQuickItem *parent)
     audioFormat.setByteOrder(QAudioFormat::LittleEndian);
     audioFormat.setSampleType(QAudioFormat::SignedInt);
 
-    //刷新延时
-    updateTimer.setSingleShot(true);
-    connect(&updateTimer,&QTimer::timeout,this,[this]{
-        update();
-    });
-
-    //operate更新的状态延时
-    stateTimer.setSingleShot(true);
-    connect(&stateTimer,&QTimer::timeout,this,[this]{
-        setRecordState(stateTemp);
-    });
-
     //抽样点绘制
     sampleData.reserve(10000); //预置元素内存
 
@@ -299,7 +287,7 @@ void AudioRecorderView::init()
     connect(this,&AudioRecorderView::requestPlay,ioOperate,&AudioRecorderOperate::doPlay);
     connect(this,&AudioRecorderView::requestSuspendPlay,ioOperate,&AudioRecorderOperate::doSuspendPlay);
     connect(this,&AudioRecorderView::requestResumePlay,ioOperate,&AudioRecorderOperate::doResumePlay);
-    connect(ioOperate,&AudioRecorderOperate::recordStateChanged,this,&AudioRecorderView::updateRecordState);
+    connect(ioOperate,&AudioRecorderOperate::recordStateChanged,this,&AudioRecorderView::setRecordState);
     connect(ioOperate,&AudioRecorderOperate::dataChanged,this,&AudioRecorderView::recvData);
     connect(ioOperate,&AudioRecorderOperate::durationChanged,this,&AudioRecorderView::setDuration);
     connect(ioOperate,&AudioRecorderOperate::positionChanged,this,&AudioRecorderView::setPosition);
@@ -345,8 +333,9 @@ void AudioRecorderView::updateDataSample()
     int data_show=data_count/2;
     if(getDisplayMode()==AudioRecorder::Tracking&&
             getRecordState()==AudioRecorder::Record){
-        //单通道时5s的范围滚动
-        const int max_show=5*1*audioFormat.sampleRate();
+        //单通道时Ns的范围滚动
+        //最大显示采样点数计算值=[N sample]*[1 channel]*[sampleRate]
+        const int max_show=6*1*audioFormat.sampleRate();
         if(data_show>max_show)
             data_show=max_show;
     }
@@ -432,15 +421,7 @@ double AudioRecorderView::calculateSpaceHelper(double valueRefRange, int dividen
 
 void AudioRecorderView::refresh()
 {
-    //大于xx ms立即刷新，否则定时器刷新
-    if(updateElapse.elapsed()>30){
-        updateTimer.stop();
-        update();
-        updateElapse.restart();
-    }else{
-        //未结束则重新start
-        updateTimer.start(30);
-    }
+    update();
 }
 
 void AudioRecorderView::recvData(const QByteArray &data)
@@ -449,10 +430,4 @@ void AudioRecorderView::recvData(const QByteArray &data)
     setHasData(!audioData.isEmpty());
     updateDataSample();
     refresh();
-}
-
-void AudioRecorderView::updateRecordState(AudioRecorder::RecordState state)
-{
-    stateTemp=state;
-    stateTimer.start(500);
 }

@@ -25,6 +25,13 @@
  * 3.操作时，先预置本地状态再通知线程执行对应操作
  *   线程返回的数据先判断当前状态是否符合，
  *   直接用锁还是用信号槽？先用信号槽完成功能
+ * 4.在界面复杂时刷新有卡顿
+ *
+ * @todo
+ * 渲染流程优化
+ *
+ * @history
+ * 2021-1-21 移除了刷新延时定时器，在实践的时候感觉刷新率没那么高
  */
 class AudioRecorderView : public QQuickPaintedItem
 {
@@ -155,21 +162,12 @@ public slots:
     void refresh();
     //添加数据
     void recvData(const QByteArray &data);
-    //线程中的operate更新了状态，加定时器延时避免多次切换闪烁
-    void updateRecordState(AudioRecorder::RecordState state);
 
 private:
     //当前状态
     AudioRecorder::RecordState recordState=AudioRecorder::Stop;
     //绘制模式
     AudioRecorder::DisplayMode displayMode=AudioRecorder::Tracking;
-    //刷新定时器
-    QTimer updateTimer;
-    //刷新间隔
-    QElapsedTimer updateElapse;
-    //operate状态更新
-    QTimer stateTimer;
-    AudioRecorder::RecordState stateTemp;
 
     //设备信息
     AudioRecorderDevice deviceInfo;
