@@ -16,9 +16,10 @@
  * @author 龚建波
  * @date 2021-1-12
  * @note
- * 1.输入输出使用默认的推拉模式start
- * 如果播放还是有卡顿的话替换为SDL
+ * 1.输入输出目前使用默认的推拉模式start
  * 2.绘图还是在view完成，绘制的数据及播放进度通过信号槽发送
+ * @todo
+ * ui改为定时器滚动，这样就不受数据获取不及时的影响
  */
 class AudioRecorderOperate : public QObject
         , public AudioRecorderCallback
