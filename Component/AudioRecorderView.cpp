@@ -246,11 +246,11 @@ void AudioRecorderView::paint(QPainter *painter)
         y_px=i*y1ValueToPx;
         y_text=QString::number(i);
         painter->drawText(-5-painter->fontMetrics().width(y_text),
-                          y_px+painter->fontMetrics().height()/2,
+                          -y_px+painter->fontMetrics().height()/2,
                           y_text);
         y_text=QString::number(-i);
         painter->drawText(-5-painter->fontMetrics().width(y_text),
-                          -y_px+painter->fontMetrics().height()/2,
+                          y_px+painter->fontMetrics().height()/2,
                           y_text);
     }
     painter->translate(-wave_x,-wave_y);
@@ -352,6 +352,7 @@ void AudioRecorderView::updateDataSample()
         x_step=sample_count;
     //坐标轴轴适应
     const double x_scale=(width()-leftPadding-rightPadding)/(double)sample_count;
+    //这里y轴因子已取反，绘制时无需取反
     const double y_scale=-(height()-topPadding-bottomPadding)/(double)0x10000;
 
     short cur_max=0;

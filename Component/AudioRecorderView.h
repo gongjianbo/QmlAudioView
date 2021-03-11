@@ -32,6 +32,7 @@
  *
  * @history
  * 2021-1-21 移除了刷新延时定时器，在实践的时候感觉刷新率没那么高
+ * 2021-3-11 y轴刻度值写反了
  */
 class AudioRecorderView : public QQuickPaintedItem
 {
