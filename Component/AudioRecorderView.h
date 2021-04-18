@@ -28,11 +28,13 @@
  * 4.在界面复杂时刷新有卡顿
  *
  * @todo
- * 渲染流程优化
+ * 目前view和operate都持有独立的audioData，待改为共用
+ * 代码有点乱了，待重构
  *
  * @history
  * 2021-1-21 移除了刷新延时定时器，在实践的时候感觉刷新率没那么高
  * 2021-3-11 y轴刻度值写反了
+ * 2021-4-18 录制时采用定时器刷新，使曲线动画看起来更平滑
  */
 class AudioRecorderView : public QQuickPaintedItem
 {
@@ -131,7 +133,7 @@ protected:
     int plotAreaHeight() const;
     //更新数据点抽样，绘制时根据抽样绘制
     void updateDataSample();
-    //计算y周像素间隔
+    //计算y轴像素间隔
     void calculateSpace(double yAxisLen);
     double calculateSpaceHelper(double valueRefRange, int dividend) const;
 
@@ -163,6 +165,8 @@ public slots:
     void refresh();
     //添加数据
     void recvData(const QByteArray &data);
+    //record offset刷新
+    void recordUpdate();
 
 private:
     //当前状态
@@ -204,16 +208,29 @@ private:
     //临时数据缓存目录
     QString cacheDir;
 
+    //计算刻度间隔
+    double y1PxToValue=1;
+    double y1ValueToPx=1;
+    double yRefPxSpace=40;
+    int yValueSpace=1000;
+
+    //录制时的刷新定时器
+    QTimer recordTimer;
+    //根据时间计算的数据点数，和实际的算差值
+    qint64 recordPoints=0;
+    qint64 recordOffset=0;
+    QElapsedTimer recordElapse;
+
+    //【】ui
     //四个边距
     //该版本刻度是一体的，所以刻度的宽高也算在padding里
+    //而plot区域就是去除padding的中间部分
     int leftPadding=60;
     int rightPadding=5;
     int topPadding=5;
     int bottomPadding=5;
     //圆角
     int radius=0;
-
-    //颜色
     //背景色
     QColor backgroundColor=QColor("#0E306A");
     //图区域颜色
@@ -228,12 +245,6 @@ private:
     QColor axisColor=QColor(200,200,200);
     //文本颜色
     QColor textColor=QColor(200,200,200);
-
-    //计算刻度间隔
-    double y1PxToValue=1;
-    double y1ValueToPx=1;
-    double yRefPxSpace=40;
-    int yValueSpace=1000;
 };
 
 #endif // AUDIORECORDERVIEW_H

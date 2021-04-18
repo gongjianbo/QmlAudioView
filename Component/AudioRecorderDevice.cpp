@@ -195,6 +195,7 @@ bool AudioRecorderDevice::nativeEventFilter(const QByteArray &eventType, void *m
 
 void AudioRecorderDevice::updateDeviceInfos()
 {
+    //因为有updateTimer，所以不太可能无间隔触发
     if(!futureWatcher.isFinished()){
         qDebug()<<"update device info failed, futureWatcher is running";
         return;

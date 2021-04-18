@@ -32,7 +32,7 @@ AudioRecorderView::AudioRecorderView(QQuickItem *parent)
     //不可见后stop
     connect(this,&AudioRecorderView::visibleChanged,this,[this]{
         if(!isVisible()){
-            //stop();
+            stop(); //如果是loader切换不需要这个，也可以写在ui里
         }
     });
 }
@@ -50,6 +50,7 @@ void AudioRecorderView::setRecordState(AudioRecorder::RecordState state)
         recordState=state;
         //录制完成后展示全谱
         if(old_state==AudioRecorder::Record){
+            recordTimer.stop();
             updateDataSample();
         }
         emit recordStateChanged();
@@ -302,6 +303,11 @@ void AudioRecorderView::init()
     connect(ioOperate,&AudioRecorderOperate::saveFileFinished,this,&AudioRecorderView::saveFileFinished);
 
     ioThread->start();
+
+    //record时定时刷新
+    connect(&recordTimer,&QTimer::timeout,this,&AudioRecorderView::recordUpdate);
+    //刷新间隔
+    recordTimer.setInterval(30);
 }
 
 void AudioRecorderView::free()
@@ -329,20 +335,42 @@ void AudioRecorderView::updateDataSample()
         return;
 
     //根据模式切换显示的数据范围，暂时固定值
-    //s*channel*sampleRate
-    int data_show=data_count/2;
+    //const point_size=(audioFormat.sampleSize()/8); //目前固定2字节
+    //int point_count=data_count/2;
+    //if(getDisplayMode()==AudioRecorder::Tracking&&
+    //        getRecordState()==AudioRecorder::Record){
+    //    //单通道时Ns的范围滚动
+    //    //最大显示采样点数计算值=[N sample]*[1 channel]*[sampleRate]
+    //    //const int point_max=6*1*audioFormat.sampleRate();
+    //    //if(point_count>point_max)
+    //    //    point_count=point_max;
+    //
+    //    //2021-4-18
+    //}
+    //if(data_count<point_count*2)
+    //    return;
+    //const int sample_count=point_count;
+    //+offset是为了只对point_count部分的数据绘制
+
+    //2021-4-18
+    int point_offset=0; //取数据的偏移
+    double scale_count=0; //x轴内可以绘制的点数个数
     if(getDisplayMode()==AudioRecorder::Tracking&&
             getRecordState()==AudioRecorder::Record){
         //单通道时Ns的范围滚动
         //最大显示采样点数计算值=[N sample]*[1 channel]*[sampleRate]
-        const int max_show=6*1*audioFormat.sampleRate();
-        if(data_show>max_show)
-            data_show=max_show;
+        const int point_max=6*1*audioFormat.sampleRate();
+        if(recordPoints>point_max)
+            point_offset=recordPoints-point_max;
+        scale_count=data_count/2-point_offset;
+    }else{
+        scale_count=data_count/2;
     }
-    if(data_count<data_show*2)
+    const int sample_count=data_count/2-point_offset;
+    if(data_count<point_offset*2||sample_count<1)
         return;
-    const int sample_count=data_show;
-    const short *data_ptr=(const short*)audioData.constData()+(data_count/2-data_show);
+    //+offset是为了只对point_count部分的数据绘制
+    const short *data_ptr=(const short*)audioData.constData()+point_offset;
     //每一段多少采样点
     //除以2是因为太稀疏了，和audition看起来不一样
     int x_step=std::ceil(sample_count/(double)width())/2;
@@ -351,7 +379,7 @@ void AudioRecorderView::updateDataSample()
     else if(x_step>sample_count)
         x_step=sample_count;
     //坐标轴轴适应
-    const double x_scale=(width()-leftPadding-rightPadding)/(double)sample_count;
+    const double x_scale=(width()-leftPadding-rightPadding)/(double)scale_count;
     //这里y轴因子已取反，绘制时无需取反
     const double y_scale=-(height()-topPadding-bottomPadding)/(double)0x10000;
 
@@ -428,7 +456,44 @@ void AudioRecorderView::refresh()
 void AudioRecorderView::recvData(const QByteArray &data)
 {
     audioData.append(data);
-    setHasData(!audioData.isEmpty());
+    if(!getHasData()){
+        setHasData(!data.isEmpty());
+        //如果之前没数据，表示这是第一帧数据
+        if(getDisplayMode()==AudioRecorder::Tracking&&
+                getRecordState()==AudioRecorder::Record){
+            recordTimer.start();
+            recordPoints=audioData.count()/2; //目前固定2字节
+            recordOffset=audioData.count()/2;
+            recordElapse.restart();
+        }
+    }
+
+    //之前根据recv来刷新，现在录制时定时器刷新
+    //updateDataSample();
+    //refresh();
+
+    //2021-4-18
+    if(getDisplayMode()==AudioRecorder::Tracking&&
+            getRecordState()==AudioRecorder::Record){
+        //qDebug()<<"recv"<<QTime::currentTime();
+    }else{
+        updateDataSample();
+        refresh();
+    }
+}
+
+void AudioRecorderView::recordUpdate()
+{
+    //if(getDisplayMode()==AudioRecorder::Tracking&&
+    //        getRecordState()==AudioRecorder::Record){
+    //采样率16k 8k可以整除
+    //qDebug()<<"update"<<QTime::currentTime();
+    recordPoints=recordOffset+1*audioFormat.sampleRate()*recordElapse.elapsed()/1000;
+    if(qAbs(recordPoints-audioData.count()/2)>audioFormat.sampleRate()){
+        recordOffset=audioData.count()/2;
+        recordElapse.restart();
+    }
+    //qDebug()<<recordPoints<<audioData.count()/2<<QTime::currentTime();
     updateDataSample();
     refresh();
 }
