@@ -8,8 +8,8 @@ QT += concurrent
 CONFIG += c++11 utf8_source
 DEFINES += QT_DEPRECATED_WARNINGS
 
-INCLUDEPATH += $$PWD/Component
-include($$PWD/Component/component.pri)
+INCLUDEPATH += $$PWD/GtComponent
+include($$PWD/GtComponent/GtComponent.pri)
 
 SOURCES += \
         main.cpp
