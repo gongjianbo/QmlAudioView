@@ -95,10 +95,6 @@ public:
     bool getHasData() const;
     void setHasData(bool has);
 
-    //录制
-    //sampleRate:输入采样率
-    //device:输入设备名称，建议在deviceInfo设置，这里置空
-    Q_INVOKABLE void record(int sampleRate,const QString &deviceName=QString());
     //停止录制/播放
     Q_INVOKABLE void stop();
     //播放
@@ -106,8 +102,16 @@ public:
     Q_INVOKABLE void play(const QString &deviceName=QString());
     //暂停播放
     Q_INVOKABLE void suspendPlay();
-    //暂停恢复
+    //暂停恢复播放
     Q_INVOKABLE void resumePlay();
+    //录制
+    //sampleRate:输入采样率
+    //device:输入设备名称，建议在deviceInfo设置，这里置空
+    Q_INVOKABLE void record(int sampleRate,const QString &deviceName=QString());
+    //暂停录制
+    Q_INVOKABLE void suspendRecord();
+    //暂停恢复录制
+    Q_INVOKABLE void resumeRecord();
 
     //从文件读取
     //目前不带解析器，只能解析44字节定长wav-pcm格式头
@@ -152,8 +156,12 @@ signals:
     void requestPlay(const QAudioDeviceInfo &device);
     //暂停播放
     void requestSuspendPlay();
-    //暂停恢复
+    //暂停恢复播放
     void requestResumePlay();
+    //暂停录制
+    void requestSuspendRecord();
+    //暂停恢复录制
+    void requestResumeRecord();
     //读写文件
     void requestLoadFile(const QString &filepath);
     void requestSaveFile(const QString &filepath);
@@ -170,7 +178,7 @@ public slots:
 
 private:
     //当前状态
-    AudioRecorder::RecordState recordState=AudioRecorder::Stop;
+    AudioRecorder::RecordState recordState=AudioRecorder::Stopped;
     //绘制模式
     AudioRecorder::DisplayMode displayMode=AudioRecorder::Tracking;
 

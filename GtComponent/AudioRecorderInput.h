@@ -27,6 +27,10 @@ public:
     bool startRecord(AudioRecorderBuffer *buffer, const QAudioDeviceInfo &device, const QAudioFormat &format);
     //结束录制
     void stopRecord();
+    //暂停录制
+    void suspendRecord();
+    //暂停后恢复
+    void resumeRecord();
     //结束并释放
     void freeRecord();
     //从文件读取

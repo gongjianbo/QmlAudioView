@@ -1,6 +1,5 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
-
 import Gt.Component 1.0
 
 //测试录音组件
@@ -29,7 +28,7 @@ Item {
             //测试时插了耳机笔记本就默认只有耳机的输入输出，没法测试多个io
             ComboBox{
                 id: input_comb
-                enabled: (recorder.recordState===AudioRecorder.Stop)
+                enabled: (recorder.recordState===AudioRecorder.Stopped)
                 width: 250
                 model: recorder.deviceInfo.inputDeviceNames
                 //可以保留点弹框刷新设备信息
@@ -44,7 +43,7 @@ Item {
                         currentIndex=index;
                     }else{
                         //正在使用的输入设备变更
-                        let is_record=(recorder.recordState===AudioRecorderView.Record);
+                        let is_record=(recorder.recordState===AudioRecorder.Recording);
                         //如果为录制状态则弹出save对话框
                         if(!is_record)
                             return;
@@ -56,7 +55,7 @@ Item {
             }
             ComboBox{
                 id: output_comb
-                enabled: (recorder.recordState===AudioRecorder.Stop)
+                enabled: (recorder.recordState===AudioRecorder.Stopped)
                 width: 250
                 model: recorder.deviceInfo.outputDeviceNames
                 //popup.onAboutToShow: {
@@ -88,22 +87,36 @@ Item {
         Row{
             spacing: 10
             MyButton{
-                enabled: (recorder.recordState!==AudioRecorder.Record)
-                text: "录制"
+                enabled: (recorder.recordState!==AudioRecorder.Playing)&&
+                         (recorder.recordState!==AudioRecorder.PlayPaused)
+                property bool onRecording: (recorder.recordState===AudioRecorder.Recording)
+                text: {
+                    switch(recorder.recordState)
+                    {
+                    case AudioRecorder.Recording: return "暂停";
+                    case AudioRecorder.RecordPaused: return "录制";
+                    }
+                    return "录制";
+                }
+
                 onClicked: {
-                    //如果没有选择框，用默认的就reset deviceinfo
-                    //如果未选择正确的输入设备则弹框
-                    if(input_comb.currentIndex<0)
-                        return;
-                    recorder.deviceInfo.setCurrentInputIndex(input_comb.currentIndex);
-                    recorder.record(16000,input_comb.currentText);
+                    if(onRecording){
+                        recorder.suspendRecord();
+                    }else{
+                        //如果没有选择框，用默认的就reset deviceinfo
+                        //如果未选择正确的输入设备则弹框
+                        if(input_comb.currentIndex<0)
+                            return;
+                        recorder.deviceInfo.setCurrentInputIndex(input_comb.currentIndex);
+                        recorder.record(16000,input_comb.currentText);
+                    }
                 }
             }
             MyButton{
-                enabled: (recorder.recordState!==AudioRecorder.Stop)
+                enabled: (recorder.recordState!==AudioRecorder.Stopped)
                 text: "停止"
                 onClicked: {
-                    let is_record=(recorder.recordState===AudioRecorder.Record);
+                    let is_record=(recorder.recordState===AudioRecorder.Recording);
                     recorder.stop();
                     //如果为录制状态则弹出save对话框
                     if(!is_record)
@@ -114,18 +127,20 @@ Item {
             }
             MyButton{
                 id: btn_play
-                enabled: (recorder.recordState!==AudioRecorder.Record)&&recorder.hasData
-                property bool isPlaying: (recorder.recordState===AudioRecorder.Playing)
+                enabled: (recorder.recordState!==AudioRecorder.Recording)&&
+                         (recorder.recordState!==AudioRecorder.RecordPaused)&&
+                         recorder.hasData
+                property bool onPlaying: (recorder.recordState===AudioRecorder.Playing)
                 text: {
                     switch(recorder.recordState)
                     {
                     case AudioRecorder.Playing: return "暂停";
-                    case AudioRecorder.PlayPause: return "继续";
+                    case AudioRecorder.PlayPaused: return "播放";
                     }
                     return "播放";
                 }
                 onClicked: {
-                    if(isPlaying){
+                    if(onPlaying){
                         recorder.suspendPlay();
                     }else{
                         //如果没有选择框，用默认的就reset deviceinfo
@@ -149,25 +164,17 @@ Item {
                 //    }
                 //}
             }
-            //MyButton{
-            //    text: "暂停"
-            //    onClicked: recorder.suspendPlay()
-            //}
-            //MyButton{
-            //    text: "恢复"
-            //    onClicked: recorder.resumePlay()
-            //}
             Item{
                 width: 20
                 height: 20
             }
             MyButton{
-                enabled: (recorder.recordState===AudioRecorderView.Stop)&&recorder.hasData
+                enabled: (recorder.recordState===AudioRecorder.Stopped)&&recorder.hasData
                 text: "保存文件"
                 onClicked: recorder.saveToFile("./save.wav")
             }
             MyButton{
-                enabled: (recorder.recordState===AudioRecorderView.Stop)
+                enabled: (recorder.recordState===AudioRecorder.Stopped)
                 text: "加载文件"
                 onClicked: recorder.loadFromFile("./save.wav")
             }

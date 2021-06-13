@@ -57,6 +57,20 @@ void AudioRecorderInput::stopRecord()
     }
 }
 
+void AudioRecorderInput::suspendRecord()
+{
+    if(audioInput){
+        audioInput->suspend();
+    }
+}
+
+void AudioRecorderInput::resumeRecord()
+{
+    if(audioInput){
+        audioInput->resume();
+    }
+}
+
 void AudioRecorderInput::freeRecord()
 {
     if(audioInput){

@@ -65,17 +65,18 @@ class AudioRecorder : public QObject
     Q_OBJECT
 public:
     //状态
-    //TODO增加中间态，即ui设置了，但是线程操作状态还没返回
-    enum RecordState
+    //是否需要增加中间态，即ui设置了，但是线程操作状态还没返回
+    enum RecordState : int
     {
-        Stop       //默认停止状态
-        ,Playing   //播放
-        ,PlayPause //播放暂停
-        ,Record    //录制
+        Stopped       //默认停止状态
+        ,Playing      //播放中
+        ,PlayPaused   //播放暂停
+        ,Recording    //录制中
+        ,RecordPaused //录制暂停
     };
     Q_ENUMS(RecordState)
     //显示模式
-    enum DisplayMode
+    enum DisplayMode : int
     {
         FullRange  //绘制全部数据
         ,Tracking  //跟踪最新数据

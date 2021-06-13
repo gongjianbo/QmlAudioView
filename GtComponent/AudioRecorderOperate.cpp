@@ -75,8 +75,10 @@ void AudioRecorderOperate::calcDuration()
 void AudioRecorderOperate::calcPosition()
 {
     //未播放时positon为0
+    //录制时是否需要设置到末尾？
     qint64 position=0;
-    if(getRecordState()==AudioRecorder::Playing||getRecordState()==AudioRecorder::PlayPause){
+    if(getRecordState()==AudioRecorder::Playing||
+            getRecordState()==AudioRecorder::PlayPaused){
         const int sample_rate=audioInput->inputFormat.sampleRate();
         position=((audioCursor/2)/(1.0*sample_rate)*1000);
     }
@@ -137,35 +139,22 @@ void AudioRecorderOperate::stop(bool update)
     setAudioCursor(0);
     switch (getRecordState())
     {
-    case AudioRecorder::Record:
-        audioInput->stopRecord();
-        break;
-    case AudioRecorder::Stop: break;
+    case AudioRecorder::Stopped: break;
     case AudioRecorder::Playing:
-    case AudioRecorder::PlayPause:
+    case AudioRecorder::PlayPaused:
         audioOutput->stopPlay();
+        break;
+    case AudioRecorder::Recording:
+    case AudioRecorder::RecordPaused:
+        audioInput->stopRecord();
         break;
     default:
         break;
     }
     if(update){
-        setRecordState(AudioRecorder::Stop);
+        setRecordState(AudioRecorder::Stopped);
     }
     calcPosition();
-}
-
-void AudioRecorderOperate::doRecord(const QAudioDeviceInfo &device, const QAudioFormat &format)
-{
-    stop();
-    //录制时清空数据缓存
-    audioData.clear();
-
-    if(audioInput->startRecord(audioBuffer,device,format)){
-        //切换为录制状态
-        setRecordState(AudioRecorder::Record);
-    }else{
-        qDebug()<<"录制失败";
-    }
 }
 
 void AudioRecorderOperate::doStop()
@@ -176,7 +165,7 @@ void AudioRecorderOperate::doStop()
 void AudioRecorderOperate::doPlay(const QAudioDeviceInfo &device)
 {
     //暂停继续
-    if(getRecordState()==AudioRecorder::PlayPause){
+    if(getRecordState()==AudioRecorder::PlayPaused){
         doResumePlay();
         return;
     }
@@ -199,15 +188,50 @@ void AudioRecorderOperate::doSuspendPlay()
     if(getRecordState()!=AudioRecorder::Playing)
         return;
     audioOutput->suspendPlay();
-    setRecordState(AudioRecorder::PlayPause);
+    setRecordState(AudioRecorder::PlayPaused);
 }
 
 void AudioRecorderOperate::doResumePlay()
 {
-    if(getRecordState()!=AudioRecorder::PlayPause)
+    if(getRecordState()!=AudioRecorder::PlayPaused)
         return;
     audioOutput->resumePlay();
     setRecordState(AudioRecorder::Playing);
+}
+
+void AudioRecorderOperate::doRecord(const QAudioDeviceInfo &device, const QAudioFormat &format)
+{
+    //暂停继续
+    if(getRecordState()==AudioRecorder::RecordPaused){
+        doResumeRecord();
+        return;
+    }
+    stop();
+    //录制时清空数据缓存
+    audioData.clear();
+
+    if(audioInput->startRecord(audioBuffer,device,format)){
+        //切换为录制状态
+        setRecordState(AudioRecorder::Recording);
+    }else{
+        qDebug()<<"录制失败";
+    }
+}
+
+void AudioRecorderOperate::doSuspendRecord()
+{
+    if(getRecordState()!=AudioRecorder::Recording)
+        return;
+    audioInput->suspendRecord();
+    setRecordState(AudioRecorder::RecordPaused);
+}
+
+void AudioRecorderOperate::doResumeRecord()
+{
+    if(getRecordState()!=AudioRecorder::RecordPaused)
+        return;
+    audioInput->resumeRecord();
+    setRecordState(AudioRecorder::Recording);
 }
 
 void AudioRecorderOperate::doLoadFile(const QString &filepath)

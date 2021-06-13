@@ -20,6 +20,8 @@
  * 2.绘图还是在view完成，绘制的数据及播放进度通过信号槽发送
  * @todo
  * ui改为定时器滚动，这样就不受数据获取不及时的影响
+ * @history
+ * 2021-06-13 增加录制暂停恢复接口
  */
 class AudioRecorderOperate : public QObject
         , public AudioRecorderCallback
@@ -57,8 +59,6 @@ signals:
 public slots:
     void init();
     void stop(bool update=false);
-    //录制
-    void doRecord(const QAudioDeviceInfo &device, const QAudioFormat &format);
     //停止录制/播放
     void doStop();
     //播放
@@ -67,6 +67,12 @@ public slots:
     void doSuspendPlay();
     //暂停恢复
     void doResumePlay();
+    //录制
+    void doRecord(const QAudioDeviceInfo &device, const QAudioFormat &format);
+    //暂停录制
+    void doSuspendRecord();
+    //恢复录制
+    void doResumeRecord();
     //读文件
     void doLoadFile(const QString &filepath);
     //写文件
@@ -80,7 +86,7 @@ private:
     //音频输出
     AudioRecorderOutput *audioOutput=nullptr;
     //当前状态
-    AudioRecorder::RecordState recordState=AudioRecorder::Stop;
+    AudioRecorder::RecordState recordState=AudioRecorder::Stopped;
 
     //数据缓冲区
     QByteArray audioData;
