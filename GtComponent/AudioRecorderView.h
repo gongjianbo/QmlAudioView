@@ -137,8 +137,12 @@ protected:
     int plotAreaHeight() const;
     //更新数据点抽样，绘制时根据抽样绘制
     void updateDataSample();
-    //计算y轴像素间隔
-    void calculateSpace(double yAxisLen);
+    //计算y轴幅度间隔
+    //yAxisLen为像素范围，yMin-yMax为幅度起始值
+    void calculateYSpace(double yAxisLen, qint64 yMin, qint64 yMax);
+    //计算x轴时间间隔
+    //xAxisLen为像素范围，xMin-xMax为时间轴起始值
+    void calculateXSpace(double xAxisLen, qint64 xMin, qint64 xMax);
     double calculateSpaceHelper(double valueRefRange, int dividend) const;
 
 signals:
@@ -217,10 +221,18 @@ private:
     QString cacheDir;
 
     //计算刻度间隔
+    //竖向幅度
     double y1PxToValue=1;
     double y1ValueToPx=1;
     double yRefPxSpace=40;
     int yValueSpace=1000;
+    //横向时间ms
+    double x1PxToValue=1;
+    double x1ValueToPx=1;
+    double xRefPxSpace=200;
+    int xValueSpace=1000; //1s
+    qint64 xTimeBegin=0; //ms
+    qint64 xTimeEnd=0; //ms
 
     //录制时的刷新定时器
     QTimer recordTimer;
@@ -234,9 +246,9 @@ private:
     //该版本刻度是一体的，所以刻度的宽高也算在padding里
     //而plot区域就是去除padding的中间部分
     int leftPadding=60;
-    int rightPadding=5;
-    int topPadding=5;
-    int bottomPadding=5;
+    int rightPadding=6;
+    int topPadding=6;
+    int bottomPadding=40;
     //圆角
     int radius=0;
     //背景色
