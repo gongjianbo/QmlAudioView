@@ -296,20 +296,21 @@ void AudioRecorderView::paint(QPainter *painter)
 
     //横轴时间
     painter->drawLine(leftPadding,topPadding+view_height,leftPadding+view_width,topPadding+view_height);
-    if(getDisplayMode()==AudioRecorder::FullRange){
-        const QString time_begin=QTime(0,0,0).addMSecs(xTimeBegin).toString("hh:mm:ss.zzz");
-        const QString time_end=QTime(0,0,0).addMSecs(xTimeEnd).toString("hh:mm:ss.zzz");
-        const int text_y=topPadding+view_height+painter->fontMetrics().ascent()+5;
-        const int end_x=view_width+leftPadding-painter->fontMetrics().width(time_end);
-        painter->drawText(leftPadding,text_y,time_begin);
-        painter->drawText(end_x,text_y,time_end);
-    }else if((getDisplayMode()==AudioRecorder::Tracking)){
-        const QString time_begin=QTime(0,0,0).addMSecs(xTimeBegin).toString("hh:mm:ss.zzz");
-        const QString time_end=QTime(0,0,0).addMSecs(xTimeEnd).toString("hh:mm:ss.zzz");
-        const int text_y=topPadding+view_height+painter->fontMetrics().ascent()+5;
-        const int end_x=view_width+leftPadding-painter->fontMetrics().width(time_end);
-        painter->drawText(leftPadding,text_y,time_begin);
-        painter->drawText(end_x,text_y,time_end);
+    const QString time_end=QTime(0,0,0).addMSecs(xTimeEnd).toString("hh:mm:ss.zzz");
+    const int text_y=topPadding+view_height+painter->fontMetrics().ascent()+5;
+    const int end_x=view_width+leftPadding-painter->fontMetrics().width(time_end);
+    painter->drawText(end_x,text_y,time_end);
+    for(qint64 i=-xTimeBegin%xValueSpace;i<=xTimeEnd;i+=xValueSpace)
+    {
+        x_px=i*x1ValueToPx;
+        if(x_px<0){
+            continue;
+        }else if(x_px>1&&(xTimeBegin+i+1.3*xValueSpace)>xTimeEnd){
+            //>1是避免0点也不绘制
+            break;
+        }
+        QString time_i=QTime(0,0,0).addMSecs(xTimeBegin+i).toString("hh:mm:ss.zzz");
+        painter->drawText(x_px+leftPadding,text_y,time_i);
     }
 }
 
@@ -421,7 +422,7 @@ void AudioRecorderView::updateDataSample()
         const int point_max=6*frame_points;
         if(recordPoints>point_max)
             point_offset=recordPoints-point_max;
-        scale_count=data_count/2-point_offset;
+        scale_count=recordPoints-point_offset;
         xTimeBegin=point_offset*1000.0/frame_points;
         xTimeEnd=recordPoints*1000.0/frame_points;
     }else{
@@ -488,8 +489,13 @@ void AudioRecorderView::updateDataSample()
 
 void AudioRecorderView::calculateYSpace(double yAxisLen, qint64 yMin, qint64 yMax)
 {
-    y1PxToValue=(yMax-yMin)/(yAxisLen);
-    y1ValueToPx=(yAxisLen)/(yMax-yMin);
+    if(yMax-yMin>0){
+        y1PxToValue=(yMax-yMin)/(yAxisLen);
+        y1ValueToPx=(yAxisLen)/(yMax-yMin);
+    }else{
+        y1PxToValue=1;
+        y1ValueToPx=1;
+    }
 
     //计算间隔
     double space_ref=y1PxToValue*yRefPxSpace;
@@ -500,8 +506,13 @@ void AudioRecorderView::calculateYSpace(double yAxisLen, qint64 yMin, qint64 yMa
 
 void AudioRecorderView::calculateXSpace(double xAxisLen, qint64 xMin, qint64 xMax)
 {
-    x1PxToValue=(xMax-xMin)/(xAxisLen);
-    x1ValueToPx=(xAxisLen)/(xMax-xMin);
+    if(xMax-xMin>0){
+        x1PxToValue=(xMax-xMin)/(xAxisLen);
+        x1ValueToPx=(xAxisLen)/(xMax-xMin);
+    }else{
+        x1PxToValue=1;
+        x1ValueToPx=1;
+    }
 
     //计算间隔
     double space_ref=x1PxToValue*xRefPxSpace;
