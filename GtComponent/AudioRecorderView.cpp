@@ -53,6 +53,9 @@ void AudioRecorderView::setRecordState(AudioRecorder::RecordState state)
             //暂停恢复录制也会设置定时器状态，但是没冲突
             recordTimer.stop();
             updateDataSample();
+        }else if(state==AudioRecorder::Stopped){
+            //结束后更新状态并绘制
+            updateDataSample();
         }
         emit recordStateChanged();
         refresh();
@@ -419,13 +422,16 @@ void AudioRecorderView::updateDataSample()
         if(recordPoints>point_max)
             point_offset=recordPoints-point_max;
         scale_count=data_count/2-point_offset;
+        xTimeBegin=point_offset*1000.0/frame_points;
+        xTimeEnd=recordPoints*1000.0/frame_points;
     }else{
         scale_count=data_count/2;
+        xTimeBegin=point_offset*1000.0/frame_points;
+        xTimeEnd=data_count/2*1000.0/frame_points;
     }
-    xTimeBegin=point_offset*1000.0/frame_points;
-    xTimeEnd=data_count/2*1000.0/frame_points;
-    //qDebug()<<xTimeBegin<<xTimeEnd<<point_offset<<data_count/2;
     const int sample_count=data_count/2-point_offset;
+    //qDebug()<<xTimeBegin<<xTimeEnd<<recordPoints
+    //       <<point_offset<<data_count/2<<sample_count;
     if(data_count<point_offset*2||sample_count<1)
         return;
     //+offset是为了只对point_count部分的数据绘制
@@ -562,6 +568,8 @@ void AudioRecorderView::recordUpdate()
     //采样率16k 8k可以整除
     //qDebug()<<"update"<<QTime::currentTime();
     const qint64 frame_points=audioFormat.channelCount()*audioFormat.sampleRate();
+    //recordPoints为定时器计算的录制采样数，避免数据接收时间不均匀导致滚动不平滑
+    //当和实际audioData采样数差值较大则强制刷新下
     recordPoints=recordOffset+frame_points*recordElapse.elapsed()/1000;
     //目前固定16位2字节
     if(qAbs(recordPoints-audioData.count()/2)>frame_points){
