@@ -134,8 +134,9 @@ void AudioRecorderDevice::setInputDeviceInfos(const QList<QAudioDeviceInfo> &inf
     QStringList name_list;
     for(auto &info:infos)
     {
-        //暂时固定过滤16k的
-        if(info.supportedSampleRates().contains(16000)){
+        //暂时固定过滤8/16k的
+        if(info.supportedSampleRates().contains(8000)&&
+                info.supportedSampleRates().contains(16000)){
             enableInputDeviceInfos.push_back(info);
             name_list.push_back(info.deviceName());
         }
@@ -149,8 +150,9 @@ void AudioRecorderDevice::setOutputDeviceInfos(const QList<QAudioDeviceInfo> &in
     QStringList name_list;
     for(auto &info:infos)
     {
-        //暂时固定过滤16k的
-        if(info.supportedSampleRates().contains(16000)){
+        //暂时固定过滤8/16k的
+        if(info.supportedSampleRates().contains(8000)&&
+                info.supportedSampleRates().contains(16000)){
             enableOutputDeviceInfos.push_back(info);
             name_list.push_back(info.deviceName());
         }

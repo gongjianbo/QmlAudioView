@@ -25,6 +25,10 @@ Item {
         Row{
             spacing: 10
 
+            Label{
+                anchors.verticalCenter: parent.verticalCenter
+                text: " 输入设备:"
+            }
             //测试时插了耳机笔记本就默认只有耳机的输入输出，没法测试多个io
             ComboBox{
                 id: input_comb
@@ -53,6 +57,10 @@ Item {
                     }
                 }
             }
+            Label{
+                anchors.verticalCenter: parent.verticalCenter
+                text: " 输出设备:"
+            }
             ComboBox{
                 id: output_comb
                 enabled: (recorder.recordState===AudioRecorder.Stopped)
@@ -69,6 +77,44 @@ Item {
                         currentIndex=index;
                     }
                 }
+            }
+        }
+
+        Row{
+            spacing: 10
+
+            Label{
+                anchors.verticalCenter: parent.verticalCenter
+                text: " 录制采样率Hz:"
+            }
+            ComboBox{
+                id: samplerate_comb
+                enabled: (recorder.recordState===AudioRecorder.Stopped)
+                width: 110
+                model: [8000,16000] //要支持更高的采样率待更新绘制逻辑
+                currentIndex: 1
+            }
+            Label{
+                anchors.verticalCenter: parent.verticalCenter
+                text: " 采样精度bit:"
+            }
+            ComboBox{
+                id: samplesize_comb
+                enabled: (recorder.recordState===AudioRecorder.Stopped)
+                width: 80
+                model: [8,16]
+                currentIndex: 1
+            }
+            Label{
+                anchors.verticalCenter: parent.verticalCenter
+                text: " 通道数:"
+            }
+            ComboBox{
+                id: channelcount_comb
+                enabled: (recorder.recordState===AudioRecorder.Stopped)
+                width: 80
+                model: [1,2]
+                currentIndex: 0
             }
             Label{
                 anchors.verticalCenter: parent.verticalCenter
@@ -108,7 +154,12 @@ Item {
                         if(input_comb.currentIndex<0)
                             return;
                         recorder.deviceInfo.setCurrentInputIndex(input_comb.currentIndex);
-                        recorder.record(16000,input_comb.currentText);
+                        //设置了deviceInfo没必要填record的device参数
+                        //recorder.record(16000,input_comb.currentText);
+                        let sample_rate=Number.parseInt(samplerate_comb.currentText);
+                        let sample_size=Number.parseInt(samplesize_comb.currentText);
+                        let channel_count=Number.parseInt(channelcount_comb.currentText);
+                        recorder.record(sample_rate,sample_size,channel_count);
                     }
                 }
             }
@@ -148,7 +199,9 @@ Item {
                         if(output_comb.currentIndex<0)
                             return;
                         recorder.deviceInfo.setCurrentOutputIndex(output_comb.currentIndex);
-                        recorder.play(output_comb.currentText);
+                        //设置了deviceInfo没必要填play的device参数
+                        //recorder.play(output_comb.currentText);
+                        recorder.play();
                     }
                 }
 

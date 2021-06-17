@@ -103,7 +103,11 @@ bool AudioRecorderOutput::saveToFile(const QByteArray data, const QAudioFormat &
     }
 
     //暂时全部写入
-    AudioRecorderWavHead head=AudioRecorderWavHead::createWavHead(format.sampleRate(),data.size());
+    AudioRecorderWavHead head=AudioRecorderWavHead::createWavHead(
+                format.sampleRate(),
+                format.sampleSize(),
+                format.channelCount(),
+                data.size());
     file.write((const char *)(&head),sizeof(AudioRecorderWavHead));
     file.write(data);
     file.close();

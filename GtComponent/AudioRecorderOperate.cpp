@@ -30,7 +30,7 @@ void AudioRecorderOperate::setRecordState(AudioRecorder::RecordState state)
 
 qint64 AudioRecorderOperate::writeData(const char *data, qint64 maxSize)
 {
-    //默认为单声道，16bit
+    //双声道时数据为一左一右连续
     QByteArray new_data=QByteArray(data,maxSize);
     audioData.append(new_data);
     emit dataChanged(new_data);
@@ -60,11 +60,13 @@ void AudioRecorderOperate::calcDuration()
 {
     //更新时长信息
     const int sample_rate=audioInput->inputFormat.sampleRate();
+    const int sample_byte=audioInput->inputFormat.sampleSize()/8;
+    const int channel_count=audioInput->inputFormat.channelCount();
     qint64 duration=0;
     if(sample_rate>0){
         //时长=采样总数/每秒的采样数
         //s time*1000=ms time
-        duration=(audioData.size()/2)/(1.0*sample_rate)*1000;
+        duration=(audioData.size()/sample_byte)/(1.0*channel_count*sample_rate)*1000;
     }
     if(audioDuration!=duration){
         audioDuration=duration;
@@ -80,7 +82,9 @@ void AudioRecorderOperate::calcPosition()
     if(getRecordState()==AudioRecorder::Playing||
             getRecordState()==AudioRecorder::PlayPaused){
         const int sample_rate=audioInput->inputFormat.sampleRate();
-        position=((audioCursor/2)/(1.0*sample_rate)*1000);
+        const int sample_byte=audioInput->inputFormat.sampleSize()/8;
+        const int channel_count=audioInput->inputFormat.channelCount();
+        position=((audioCursor/sample_byte)/(1.0*channel_count*sample_rate)*1000);
     }
     if(audioPostion!=position){
         audioPostion=position;
@@ -242,7 +246,7 @@ void AudioRecorderOperate::doLoadFile(const QString &filepath)
     audioDuration=0;
     audioPostion=0;
     const bool result=audioInput->loadFromFile(audioBuffer,filepath);
-    emit loadFileFinished(filepath,result);
+    emit loadFileFinished(filepath,audioInput->inputFormat,result);
 }
 
 void AudioRecorderOperate::doSaveFile(const QString &filepath)
@@ -250,5 +254,5 @@ void AudioRecorderOperate::doSaveFile(const QString &filepath)
     stop();
 
     const bool result=audioOutput->saveToFile(audioData,audioInput->inputFormat,filepath);
-    emit saveFileFinished(filepath,result);
+    emit saveFileFinished(filepath,audioInput->inputFormat,result);
 }

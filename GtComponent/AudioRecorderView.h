@@ -107,9 +107,14 @@ public:
     //暂停恢复播放
     Q_INVOKABLE void resumePlay();
     //录制
-    //sampleRate:输入采样率
+    //sampleRate:采样率Hz
+    //sampleSize:采样大小bit
+    //channelCount:通道数
     //device:输入设备名称，建议在deviceInfo设置，这里置空
-    Q_INVOKABLE void record(int sampleRate,const QString &deviceName=QString());
+    Q_INVOKABLE void record(int sampleRate=16000,
+                            int sampleSize=16,
+                            int channelCount=1,
+                            const QString &deviceName=QString());
     //暂停录制
     Q_INVOKABLE void suspendRecord();
     //暂停恢复录制
@@ -146,6 +151,8 @@ protected:
     //xAxisLen为像素范围，xMin-xMax为时间轴起始值
     void calculateXSpace(double xAxisLen, qint64 xMin, qint64 xMax);
     double calculateSpaceHelper(double valueRefRange, int dividend) const;
+    //更新format设置
+    void setAudioFormat(const QAudioFormat &format);
 
 signals:
     void recordStateChanged();
@@ -171,8 +178,8 @@ signals:
     //读写文件
     void requestLoadFile(const QString &filepath);
     void requestSaveFile(const QString &filepath);
-    void loadFileFinished(const QString &filepath,bool result);
-    void saveFileFinished(const QString &filepath,bool result);
+    void loadFileFinished(const QString &filepath,const QAudioFormat &format,bool result);
+    void saveFileFinished(const QString &filepath,const QAudioFormat &format,bool result);
 
 public slots:
     //刷新，调用update

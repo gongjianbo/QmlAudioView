@@ -45,11 +45,15 @@ struct AudioRecorderWavHead
     unsigned int dataSize; //数据部分的长度
 
     //生成wav(pcm)文件头信息
-    //（参数列表根据使用来修改，暂时固定单通道16 bit位宽）
-    //[in] sampleRate: 采样频率
+    //[in] sampleRate: 采样频率Hz
+    //[in] sampleSize: 采样大小bit
+    //[in] channelCount: 通道数
     //[in] dataSize: pcm数据字节长度
     //[return] EasyWavHead: wav头
-    static AudioRecorderWavHead createWavHead(int sampleRate,unsigned int dataSize);
+    static AudioRecorderWavHead createWavHead(int sampleRate,
+                                              int sampleSize,
+                                              int channelCount,
+                                              unsigned int dataSize);
 
     //检测该头数据是否有效
     //主要用在读取并解析使用该头格式写的文件

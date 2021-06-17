@@ -5,16 +5,19 @@ const char *WAVE_FLAG="WAVE";
 const char *FMT_FLAG="fmt ";
 const char *DATA_FLAG="data";
 
-AudioRecorderWavHead AudioRecorderWavHead::createWavHead(int sampleRate, unsigned int dataSize)
+AudioRecorderWavHead AudioRecorderWavHead::createWavHead(int sampleRate,
+                                                         int sampleSize,
+                                                         int channelCount,
+                                                         unsigned int dataSize)
 {
-    //如果长度不能被2字节位宽整除，就去掉一个字节的数据
-    //if(dataSize%2!=0){
-    //    dataSize-=1;
+    //如果长度不能被采样位宽整除，就去掉x个字节的数据
+    //if(dataSize%sampleByte!=0){
+    //    dataSize-=xByte;
     //}
 
     //部分参数暂时用的固定值
-    const int bits=16;
-    const int channels=1;
+    const int bits=sampleSize;
+    const int channels=channelCount;
     const int head_size = sizeof(AudioRecorderWavHead);
     //先清零再赋值
     AudioRecorderWavHead wav_head;
