@@ -421,9 +421,11 @@ void AudioRecorderView::updateDataSample()
     //单个通道采样点总数
     //const int channel_points=data_count/sample_byte/channel_count;
 
-    //2021-4-18
-    int point_offset=0; //取数据的偏移
-    double show_points=0; //x轴内可以绘制的点数个数
+    //取可见范围数据的偏移
+    int point_offset=0;
+    //x轴内可以绘制的点数个数，不分通道数，计算时用步进跳过另一个通道
+    double show_points=0;
+    //判断是否为录制状态
     const bool on_recording=(getRecordState()==AudioRecorder::Recording||
                              getRecordState()==AudioRecorder::RecordPaused);
 
@@ -433,7 +435,7 @@ void AudioRecorderView::updateDataSample()
         const int range_points=6*seconds_points; //6s范围滚动
         if(recordPoints>range_points)
             point_offset=recordPoints-range_points;
-        //显示范围的大于等于range范围
+        //从完整范围去掉offset部分就是要绘制的点
         show_points=recordPoints-point_offset;
         xTimeBegin=point_offset*1000.0/seconds_points;
         xTimeEnd=recordPoints*1000.0/seconds_points;
@@ -447,7 +449,8 @@ void AudioRecorderView::updateDataSample()
     //       <<point_offset<<data_count/2<<sample_count;
     if(data_count<point_offset*sample_byte||sample_count<1)
         return;
-    //+offset是为了只对point_count部分的数据绘制
+    //+offset是为了只对show_points显示部分的数据绘制
+    //short对应16位精度，char对应8位精度
     const short *short_ptr=(const short*)audioData.constData()+point_offset;
     const uchar *char_ptr=(const uchar*)audioData.constData()+point_offset;
     //每一段内循环的步进
