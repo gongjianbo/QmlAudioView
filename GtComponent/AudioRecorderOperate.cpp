@@ -76,10 +76,10 @@ void AudioRecorderOperate::calcDuration()
 
 void AudioRecorderOperate::calcPosition()
 {
-    //未播放时positon为0
     //录制时是否需要设置到末尾？
     qint64 position=0;
-    if(getRecordState()==AudioRecorder::Playing||
+    if(getRecordState()==AudioRecorder::Stopped||
+            getRecordState()==AudioRecorder::Playing||
             getRecordState()==AudioRecorder::PlayPaused){
         const int sample_rate=audioInput->inputFormat.sampleRate();
         const int sample_byte=audioInput->inputFormat.sampleSize()/8;
@@ -96,6 +96,8 @@ void AudioRecorderOperate::setAudioCursor(qint64 cursor)
 {
     if(audioCursor!=cursor){
         audioCursor=cursor;
+        if(audioCursor<0)
+            audioCursor=0;
         emit cursorChanged(cursor);
     }
 }
@@ -126,7 +128,8 @@ void AudioRecorderOperate::init()
             //进度=已放时间和总时间之比*总字节数，注意时间单位
             //-50是为了补偿时差，音画同步，这个50就是output的NotifyInterval
             //（还有点问题就是快结束的时候尾巴上那点直接结束了，数据少的时候明显点）
-            qint64 cursor = (audioOutput->audioOutput->processedUSecs()/1000.0-50)/audioDuration*audioData.count();
+            qint64 cursor=cursorOffset+(audioOutput->audioOutput->processedUSecs()/1000.0-50)/audioDuration*audioData.count();
+            //qDebug()<<"notify"<<cursor<<cursorOffset<<outputCount;
             if(cursor>outputCount)
                 cursor=outputCount;
             setAudioCursor(cursor);
@@ -140,6 +143,7 @@ void AudioRecorderOperate::stop(bool update)
     //录制、播放时都会调用stop，所以把一些状态重置放这里
     //(停止的时候audioData的数据保留，在start时才清空)
     outputCount=0;
+    cursorOffset=0;
     setAudioCursor(0);
     switch (getRecordState())
     {
@@ -166,7 +170,7 @@ void AudioRecorderOperate::doStop()
     stop(true);
 }
 
-void AudioRecorderOperate::doPlay(const QAudioDeviceInfo &device)
+void AudioRecorderOperate::doPlay(qint64 offset, const QAudioDeviceInfo &device)
 {
     //暂停继续
     if(getRecordState()==AudioRecorder::PlayPaused){
@@ -179,6 +183,15 @@ void AudioRecorderOperate::doPlay(const QAudioDeviceInfo &device)
         return;
 
     const QAudioFormat format=audioInput->inputFormat;
+    if(offset>0&&format.sampleSize()>0){
+        offset-=(offset%(format.sampleSize()/8));
+        if(offset<0)
+            offset=0;
+        outputCount=offset;
+        cursorOffset=offset;
+        setAudioCursor(offset);
+        calcPosition();
+    }
     if(audioOutput->startPlay(audioBuffer,device,format)){
         //切换为播放状态
         setRecordState(AudioRecorder::Playing);
@@ -255,4 +268,23 @@ void AudioRecorderOperate::doSaveFile(const QString &filepath)
 
     const bool result=audioOutput->saveToFile(audioData,audioInput->inputFormat,filepath);
     emit saveFileFinished(filepath,audioInput->inputFormat,result);
+}
+
+void AudioRecorderOperate::doUpdateCursorOffset(qint64 offset)
+{
+    const QAudioFormat format=audioInput->inputFormat;
+    if(offset>0&&format.sampleSize()>0){
+        audioBuffer->reset();
+        offset-=(offset%(format.sampleSize()/8));
+        if(offset<0)
+            offset=0;
+        outputCount=offset;
+        if(getRecordState()==AudioRecorder::Stopped){
+            cursorOffset=offset;
+        }else{
+            cursorOffset=cursorOffset+offset-audioCursor;
+        }
+        setAudioCursor(offset);
+        calcPosition();
+    }
 }

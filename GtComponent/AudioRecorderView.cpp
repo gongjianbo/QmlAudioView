@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include <QCoreApplication>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QFileInfo>
 #include <QFile>
@@ -13,20 +14,8 @@
 AudioRecorderView::AudioRecorderView(QQuickItem *parent)
     : QQuickPaintedItem(parent)
 {
+    setAcceptedMouseButtons(Qt::AllButtons);
     init();
-
-    //采样精度和声道数暂时默认16\1
-    //默认参数可以放到全局配置
-    audioFormat.setSampleRate(16000);
-    audioFormat.setSampleSize(16);
-    audioFormat.setChannelCount(1);
-    audioFormat.setCodec("audio/pcm");
-    audioFormat.setByteOrder(QAudioFormat::LittleEndian);
-    audioFormat.setSampleType(QAudioFormat::SignedInt);
-
-    //抽样点绘制
-    sampleData.reserve(10000); //预置元素内存
-
     //默认的缓存目录
     setCacheDir(qApp->applicationDirPath()+"/AppData/Default/AudioRecorder");
 
@@ -106,6 +95,16 @@ QString AudioRecorderView::getPositionString() const
     return QTime(0,0).addMSecs(audioPostion).toString("hh:mm:ss");
 }
 
+void AudioRecorderView::setAudioCursor(qint64 cursor)
+{
+    if(audioCursor!=cursor){
+        audioCursor=cursor;
+        if(audioCursor<0)
+            audioCursor=0;
+        refresh();
+    }
+}
+
 bool AudioRecorderView::getHasData() const
 {
     return hasData;
@@ -136,7 +135,7 @@ void AudioRecorderView::play(const QString &deviceName)
     //先判断暂停继续，非暂停再stop后播放，无数据则stop
     setRecordState(AudioRecorder::Playing);
     const QAudioDeviceInfo device_info=deviceInfo.getOutputInfo(deviceName);
-    emit requestPlay(device_info);
+    emit requestPlay(getAudioCursor()>0?getAudioCursor():0,device_info);
 }
 
 void AudioRecorderView::suspendPlay()
@@ -160,12 +159,7 @@ void AudioRecorderView::record(int sampleRate, int sampleSize, int channelCount,
         return;
     }
     //先stop当前操作、清空数据，再开始录制操作
-    audioData.clear();
-    sampleData.clear();
-    audioCursor=0;
-    setDuration(0);
-    setPosition(0);
-    setHasData(false);
+    clearData();
     QAudioFormat format=audioFormat;
     format.setSampleRate(sampleRate);
     format.setSampleSize(sampleSize);
@@ -193,12 +187,7 @@ void AudioRecorderView::resumeRecord()
 
 void AudioRecorderView::loadFromFile(const QString &filepath)
 {
-    audioData.clear();
-    sampleData.clear();
-    audioCursor=0;
-    setDuration(0);
-    setPosition(0);
-    setHasData(false);
+    clearData();
     setRecordState(AudioRecorder::Stopped);
     emit requestLoadFile(filepath);
 }
@@ -277,7 +266,7 @@ void AudioRecorderView::paint(QPainter *painter)
 
         //画游标
         painter->setPen(cursorColor);
-        const int play_pos=double(audioCursor)/audioData.count()*view_width+leftPadding;
+        const int play_pos=double(getAudioCursor())/audioData.count()*view_width+leftPadding;
         painter->drawLine(play_pos,topPadding,
                           play_pos,height()-bottomPadding);
     }
@@ -333,6 +322,47 @@ void AudioRecorderView::geometryChanged(const QRectF &newGeometry, const QRectF 
     refresh();
 }
 
+void AudioRecorderView::mousePressEvent(QMouseEvent *event)
+{
+    event->accept();
+    QRect plot_rect(leftPadding,rightPadding,plotAreaWidth(),plotAreaHeight());
+    if(!getHasData()||!plot_rect.contains(event->pos()))
+        return;
+    if(event->button()==Qt::LeftButton){
+        qint64 cursor=(double)(event->x()-leftPadding)/plotAreaWidth()*audioData.size();
+        cursor-=(cursor%(audioFormat.sampleSize()/8));
+        //非录制状态下点击移动游标
+        if(getRecordState()==AudioRecorder::Stopped||
+        getRecordState()==AudioRecorder::Playing||
+                getRecordState()==AudioRecorder::PlayPaused)
+        {
+           emit requestUpdateCursorOffset(cursor);
+        }
+
+    }else if(event->button()==Qt::RightButton){
+
+    }
+}
+
+void AudioRecorderView::mouseMoveEvent(QMouseEvent *event)
+{
+    event->accept();
+    if(!getHasData())
+        return;
+}
+
+void AudioRecorderView::mouseReleaseEvent(QMouseEvent *event)
+{
+    event->accept();
+    if(!getHasData())
+        return;
+    if(event->button()==Qt::LeftButton){
+
+    }else if(event->button()==Qt::RightButton){
+
+    }
+}
+
 void AudioRecorderView::init()
 {
     qRegisterMetaType<QAudioDeviceInfo>("QAudioDeviceInfo");
@@ -353,16 +383,14 @@ void AudioRecorderView::init()
     connect(this,&AudioRecorderView::requestRecord,ioOperate,&AudioRecorderOperate::doRecord);
     connect(this,&AudioRecorderView::requestSuspendRecord,ioOperate,&AudioRecorderOperate::doSuspendRecord);
     connect(this,&AudioRecorderView::requestResumeRecord,ioOperate,&AudioRecorderOperate::doResumeRecord);
+    connect(this,&AudioRecorderView::requestUpdateCursorOffset,ioOperate,&AudioRecorderOperate::doUpdateCursorOffset);
 
     connect(ioOperate,&AudioRecorderOperate::recordStateChanged,this,&AudioRecorderView::setRecordState);
     connect(ioOperate,&AudioRecorderOperate::dataChanged,this,&AudioRecorderView::recvData);
     connect(ioOperate,&AudioRecorderOperate::durationChanged,this,&AudioRecorderView::setDuration);
     connect(ioOperate,&AudioRecorderOperate::positionChanged,this,&AudioRecorderView::setPosition);
-    connect(ioOperate,&AudioRecorderOperate::cursorChanged,this,[this](qint64 cursor){
-        if(audioCursor<cursor||cursor==0)
-            audioCursor=cursor;
-        refresh();
-    });
+    connect(ioOperate,&AudioRecorderOperate::cursorChanged,this,&AudioRecorderView::setAudioCursor);
+
     connect(this,&AudioRecorderView::requestLoadFile,ioOperate,&AudioRecorderOperate::doLoadFile);
     connect(this,&AudioRecorderView::requestSaveFile,ioOperate,&AudioRecorderOperate::doSaveFile);
     connect(ioOperate,&AudioRecorderOperate::loadFileFinished,this,&AudioRecorderView::loadFileFinished);
@@ -380,12 +408,34 @@ void AudioRecorderView::init()
     connect(&recordTimer,&QTimer::timeout,this,&AudioRecorderView::recordUpdate);
     //刷新间隔
     recordTimer.setInterval(30);
+
+    //采样精度和声道数暂时默认16\1
+    //默认参数可以放到全局配置
+    audioFormat.setSampleRate(16000);
+    audioFormat.setSampleSize(16);
+    audioFormat.setChannelCount(1);
+    audioFormat.setCodec("audio/pcm");
+    audioFormat.setByteOrder(QAudioFormat::LittleEndian);
+    audioFormat.setSampleType(QAudioFormat::SignedInt);
+
+    //抽样点绘制
+    sampleData.reserve(10000); //预置元素内存
 }
 
 void AudioRecorderView::free()
 {
     ioThread->quit();
     ioThread->wait();
+}
+
+void AudioRecorderView::clearData()
+{
+    audioData.clear();
+    sampleData.clear();
+    setAudioCursor(0);
+    setDuration(0);
+    setPosition(0);
+    setHasData(false);
 }
 
 int AudioRecorderView::plotAreaWidth() const

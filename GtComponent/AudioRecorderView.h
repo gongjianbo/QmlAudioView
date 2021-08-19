@@ -36,6 +36,7 @@
  * 2021-3-11 y轴刻度值写反了
  * 2021-4-18 录制时采用定时器刷新，使曲线动画看起来更平滑
  * 2021-8-19 绘制使用CompositionMode_Source，录制缓冲增大
+ *           鼠标点击更新游标位置（播放和停止时可用）
  */
 class AudioRecorderView : public QQuickPaintedItem
 {
@@ -92,6 +93,10 @@ public:
     void setPosition(qint64 position);
     QString getPositionString() const;
 
+    //播放进度字节游标
+    qint64 getAudioCursor() const { return audioCursor; }
+    void setAudioCursor(qint64 cursor);
+
     //当前是否有数据
     bool getHasData() const;
     void setHasData(bool has);
@@ -134,10 +139,15 @@ public:
 protected:
     void paint(QPainter *painter) override;
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
 
     //初始化输入输出等
     void init();
     void free();
+    //清除当前数据
+    void clearData();
     //去掉padding的宽高
     int plotAreaWidth() const;
     int plotAreaHeight() const;
@@ -165,7 +175,7 @@ signals:
     //停止录制/播放
     void requestStop();
     //播放
-    void requestPlay(const QAudioDeviceInfo &device);
+    void requestPlay(qint64 offset, const QAudioDeviceInfo &device);
     //暂停播放
     void requestSuspendPlay();
     //暂停恢复播放
@@ -174,6 +184,8 @@ signals:
     void requestSuspendRecord();
     //暂停恢复录制
     void requestResumeRecord();
+    //更新游标位置
+    void requestUpdateCursorOffset(qint64 offset);
     //读写文件
     void requestLoadFile(const QString &filepath);
     void requestSaveFile(const QString &filepath);

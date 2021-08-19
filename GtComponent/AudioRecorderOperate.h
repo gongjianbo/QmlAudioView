@@ -60,7 +60,7 @@ public slots:
     //停止录制/播放
     void doStop();
     //播放
-    void doPlay(const QAudioDeviceInfo &device);
+    void doPlay(qint64 offset, const QAudioDeviceInfo &device);
     //暂停播放
     void doSuspendPlay();
     //暂停恢复
@@ -75,6 +75,8 @@ public slots:
     void doLoadFile(const QString &filepath);
     //写文件
     void doSaveFile(const QString &filepath);
+    //更新游标
+    void doUpdateCursorOffset(qint64 offset);
 
 private:
     //QAudioInput/Output处理数据时回调IODevice的接口
@@ -92,6 +94,8 @@ private:
     qint64 outputCount{ 0 };
     //播放数据计数，对应ui游标/audioOutput->processedUSecs()
     qint64 audioCursor{ 0 };
+    //offset表示start播放的偏移
+    qint64 cursorOffset{ 0 };
     //数据时长ms
     qint64 audioDuration{ 0 };
     //播放或者录制时长ms
