@@ -1,6 +1,4 @@
-#ifndef AUDIORECORDERDEVICE_H
-#define AUDIORECORDERDEVICE_H
-
+#pragma once
 #include <QObject>
 #include <QTimer>
 #include <QAudioDeviceInfo>
@@ -110,5 +108,3 @@ private:
     //输出设备名列表
     QStringList outputDeviceNames;
 };
-
-#endif // AUDIORECORDERDEVICE_H

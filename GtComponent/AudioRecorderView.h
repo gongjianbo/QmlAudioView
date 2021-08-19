@@ -1,6 +1,4 @@
-#ifndef AUDIORECORDERVIEW_H
-#define AUDIORECORDERVIEW_H
-
+#pragma once
 #include <QQuickPaintedItem>
 #include <QDateTime>
 #include <QTimer>
@@ -192,18 +190,18 @@ public slots:
 
 private:
     //当前状态
-    AudioRecorder::RecordState recordState=AudioRecorder::Stopped;
+    AudioRecorder::RecordState recordState{ AudioRecorder::Stopped };
     //绘制模式
-    AudioRecorder::DisplayMode displayMode=AudioRecorder::Tracking;
+    AudioRecorder::DisplayMode displayMode{ AudioRecorder::Tracking };
 
     //设备信息
     AudioRecorderDevice deviceInfo;
     //格式参数
     QAudioFormat audioFormat;
     //输入输出放到线程处理
-    QThread *ioThread=nullptr;
+    QThread *ioThread{ nullptr };
     //输入输出操作管理，置于线程中
-    AudioRecorderOperate *ioOperate=nullptr;
+    AudioRecorderOperate *ioOperate{ nullptr };
 
     //表示一个绘制用的抽样点信息
     struct SamplePoint
@@ -218,63 +216,61 @@ private:
     //完整的音频数据
     QByteArray audioData;
     //是否有数据
-    bool hasData=false;
+    bool hasData{ false };
     //输出数据计数，对应read/write接口
-    //qint64 outputCount=0;
+    //qint64 outputCount{ 0 };
     //播放数据计数，对应ui游标/audioOutput->processedUSecs()
-    qint64 audioCursor=0;
+    qint64 audioCursor{ 0 };
     //数据时长ms
-    qint64 audioDuration=0;
+    qint64 audioDuration{ 0 };
     //播放或者录制时长ms
-    qint64 audioPostion=0;
+    qint64 audioPostion{ 0 };
     //临时数据缓存目录
     QString cacheDir;
 
     //计算刻度间隔
     //竖向幅度
-    double y1PxToValue=1;
-    double y1ValueToPx=1;
-    double yRefPxSpace=40;
-    int yValueSpace=1000;
+    double y1PxToValue{ 1 };
+    double y1ValueToPx{ 1 };
+    double yRefPxSpace{ 40 };
+    int yValueSpace{ 1000 };
     //横向时间ms
-    double x1PxToValue=1;
-    double x1ValueToPx=1;
-    double xRefPxSpace=200;
-    int xValueSpace=1000; //1s
-    qint64 xTimeBegin=0; //ms
-    qint64 xTimeEnd=0; //ms
+    double x1PxToValue{ 1 };
+    double x1ValueToPx{ 1 };
+    double xRefPxSpace{ 200 };
+    int xValueSpace{ 1000 }; //1s
+    qint64 xTimeBegin{ 0 }; //ms
+    qint64 xTimeEnd{ 0 }; //ms
 
     //录制时的刷新定时器
     QTimer recordTimer;
     //根据时间计算的数据点数，和实际的算差值
-    qint64 recordPoints=0;
-    qint64 recordOffset=0;
+    qint64 recordPoints{ 0 };
+    qint64 recordOffset{ 0 };
     QElapsedTimer recordElapse;
 
     //【】ui
     //四个边距
     //该版本刻度是一体的，所以刻度的宽高也算在padding里
     //而plot区域就是去除padding的中间部分
-    int leftPadding=60;
-    int rightPadding=6;
-    int topPadding=6;
-    int bottomPadding=40;
+    int leftPadding{ 60 };
+    int rightPadding{ 6 };
+    int topPadding{ 6 };
+    int bottomPadding{ 40 };
     //圆角
-    int radius=0;
+    int radius{ 0 };
     //背景色
-    QColor backgroundColor=QColor("#0E306A");
+    QColor backgroundColor{ QColor("#0E306A") };
     //图区域颜色
-    QColor viewColor=QColor("#13275D");
+    QColor viewColor{ QColor("#13275D") };
     //网格颜色
-    QColor gridColor=QColor(120,120,120);
+    QColor gridColor{ QColor(120,120,120) };
     //曲线颜色
-    QColor seriesColor=QColor("#1F8FFF");
+    QColor seriesColor{ QColor("#1F8FFF") };
     //游标颜色
-    QColor cursorColor=QColor("#FF385E");
+    QColor cursorColor{ QColor("#FF385E") };
     //刻度轴颜色
-    QColor axisColor=QColor(200,200,200);
+    QColor axisColor{ QColor(200,200,200) };
     //文本颜色
-    QColor textColor=QColor(200,200,200);
+    QColor textColor{ QColor(200,200,200) };
 };
-
-#endif // AUDIORECORDERVIEW_H

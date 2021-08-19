@@ -1,6 +1,4 @@
-#ifndef AUDIORECORDERINPUT_H
-#define AUDIORECORDERINPUT_H
-
+#pragma once
 #include <QObject>
 #include <QAudioInput>
 
@@ -44,7 +42,7 @@ signals:
 
 private:
     //输入
-    QAudioInput *audioInput=nullptr;
+    QAudioInput *audioInput{ nullptr };
     //最新设置的deviceinfo
     QAudioDeviceInfo inputDevice;
     //当前使用的deviceinfo，start时不相同则重新new
@@ -56,5 +54,3 @@ private:
 
     friend class AudioRecorderOperate;
 };
-
-#endif // AUDIORECORDERINPUT_H

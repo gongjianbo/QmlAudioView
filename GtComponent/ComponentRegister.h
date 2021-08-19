@@ -1,6 +1,4 @@
-#ifndef COMPONENTREGISTER_H
-#define COMPONENTREGISTER_H
-
+#pragma once
 #include <QQmlEngine>
 #include <QQmlContext>
 
@@ -23,4 +21,3 @@ public:
     }
 };
 
-#endif // COMPONENTREGISTER_H

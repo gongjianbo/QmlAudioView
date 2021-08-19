@@ -1,6 +1,4 @@
-#ifndef AUDIORECORDEROPERATE_H
-#define AUDIORECORDEROPERATE_H
-
+#pragma once
 #include <QDateTime>
 #include <QTimer>
 #include <QElapsedTimer>
@@ -80,24 +78,22 @@ public slots:
 
 private:
     //QAudioInput/Output处理数据时回调IODevice的接口
-    AudioRecorderBuffer *audioBuffer=nullptr;
+    AudioRecorderBuffer *audioBuffer{ nullptr };
     //音频输入
-    AudioRecorderInput *audioInput=nullptr;
+    AudioRecorderInput *audioInput{ nullptr };
     //音频输出
-    AudioRecorderOutput *audioOutput=nullptr;
+    AudioRecorderOutput *audioOutput{ nullptr };
     //当前状态
-    AudioRecorder::RecordState recordState=AudioRecorder::Stopped;
+    AudioRecorder::RecordState recordState{ AudioRecorder::Stopped };
 
     //数据缓冲区
     QByteArray audioData;
     //输出数据计数，对应read/write接口
-    qint64 outputCount=0;
+    qint64 outputCount{ 0 };
     //播放数据计数，对应ui游标/audioOutput->processedUSecs()
-    qint64 audioCursor=0;
+    qint64 audioCursor{ 0 };
     //数据时长ms
-    qint64 audioDuration=0;
+    qint64 audioDuration{ 0 };
     //播放或者录制时长ms
-    qint64 audioPostion=0;
+    qint64 audioPostion{ 0 };
 };
-
-#endif // AUDIORECORDEROPERATE_H

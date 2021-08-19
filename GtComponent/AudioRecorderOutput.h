@@ -1,6 +1,4 @@
-#ifndef AUDIORECORDEROUTPUT_H
-#define AUDIORECORDEROUTPUT_H
-
+#pragma once
 #include <QObject>
 #include <QAudioOutput>
 
@@ -43,7 +41,7 @@ signals:
 
 private:
     //输入
-    QAudioOutput *audioOutput=nullptr;
+    QAudioOutput *audioOutput{ nullptr };
     //最新设置的deviceinfo
     QAudioDeviceInfo outputDevice;
     //当前使用的deviceinfo
@@ -55,5 +53,3 @@ private:
 
     friend class AudioRecorderOperate;
 };
-
-#endif // AUDIORECORDEROUTPUT_H

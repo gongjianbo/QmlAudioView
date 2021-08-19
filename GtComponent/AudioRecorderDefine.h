@@ -1,6 +1,4 @@
-#ifndef AUDIORECORDERDEFINE_H
-#define AUDIORECORDERDEFINE_H
-
+#pragma once
 #include <QAudio>
 #include <QAudioFormat>
 
@@ -87,5 +85,3 @@ public:
     };
     Q_ENUMS(DisplayMode)
 };
-
-#endif // AUDIORECORDERDEFINE_H

@@ -1,6 +1,4 @@
-#ifndef AUDIORECORDERBUFFER_H
-#define AUDIORECORDERBUFFER_H
-
+#pragma once
 #include <QIODevice>
 
 /**
@@ -40,7 +38,5 @@ public:
 
 private:
     //读写数据时再回调view相关接口进行操作
-    AudioRecorderCallback *callbackPtr=nullptr;
+    AudioRecorderCallback *callbackPtr{ nullptr };
 };
-
-#endif // AUDIORECORDERBUFFER_H
