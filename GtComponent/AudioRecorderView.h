@@ -31,12 +31,13 @@
  *
  * @todo
  * 目前view和operate都持有独立的audioData，待改为共用
- * 代码有点乱了，待重构
+ * 由于功能增加，需要对现有逻辑封装和重构
  *
  * @history
  * 2021-1-21 移除了刷新延时定时器，在实践的时候感觉刷新率没那么高
  * 2021-3-11 y轴刻度值写反了
  * 2021-4-18 录制时采用定时器刷新，使曲线动画看起来更平滑
+ * 2021-8-19 绘制使用CompositionMode_Source，录制缓冲增大
  */
 class AudioRecorderView : public QQuickPaintedItem
 {

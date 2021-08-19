@@ -44,7 +44,7 @@ bool AudioRecorderInput::startRecord(AudioRecorderBuffer *buffer, const QAudioDe
         audioInput=new QAudioInput(currentDevice,currentFormat,this);
         connect(audioInput,&QAudioInput::stateChanged,this,&AudioRecorderInput::stateChanged);
         connect(audioInput,&QAudioInput::notify,this,&AudioRecorderInput::notify);
-        //audioInput->setBufferSize(inputFormat.sampleRate()*2);
+        audioInput->setBufferSize(inputFormat.sampleRate()*inputFormat.channelCount());
     }
     buffer->reset();
     audioInput->start(buffer);

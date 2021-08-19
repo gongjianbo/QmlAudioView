@@ -218,6 +218,7 @@ QString AudioRecorderView::saveToCache(const QString &uuid)
 
 void AudioRecorderView::paint(QPainter *painter)
 {
+    painter->setCompositionMode(QPainter::CompositionMode_Source);
     //暂时没有封装步骤
     //series区域的宽高
     const int view_width=plotAreaWidth();
