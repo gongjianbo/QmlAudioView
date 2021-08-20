@@ -17,6 +17,37 @@ Item {
         onSaveFileFinished: {
             console.log("save file finished",result);
         }
+        onRequestSelectTempSlice: {
+            select_menu.x=pos.x;
+            select_menu.y=pos.y;
+            select_menu.open();
+        }
+        onRequestUnselectSlice: {
+            unselect_menu.x=pos.x;
+            unselect_menu.y=pos.y;
+            unselect_menu.idx=sliceIndex;
+            unselect_menu.open();
+        }
+
+        Menu {
+            id: select_menu
+            MenuItem {
+                text: "选中"
+                onTriggered: {
+                    recorder.selectTempSlice();
+                }
+            }
+        }
+        Menu {
+            id: unselect_menu
+            property int idx: 0
+            MenuItem {
+                text: "取消选中"
+                onTriggered: {
+                    recorder.unselectSlice(unselect_menu.idx);
+                }
+            }
+        }
     }
 
     Column{
@@ -230,6 +261,14 @@ Item {
                 enabled: (recorder.recordState===AudioRecorder.Stopped)
                 text: "加载文件"
                 onClicked: recorder.loadFromFile("./save.wav")
+            }
+            Item{
+                width: 20
+                height: 20
+            }
+            Label{
+                anchors.verticalCenter: parent.verticalCenter
+                text: "[选区个数]:"+recorder.selectCount
             }
         }
     }

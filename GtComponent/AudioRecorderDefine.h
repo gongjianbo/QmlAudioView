@@ -76,12 +76,31 @@ public:
         ,Recording    //录制中
         ,RecordPaused //录制暂停
     };
-    Q_ENUMS(RecordState)
+    Q_ENUM(RecordState)
     //显示模式
     enum DisplayMode : int
     {
         FullRange  //绘制全部数据
         ,Tracking  //跟踪最新数据
     };
-    Q_ENUMS(DisplayMode)
+    Q_ENUM(DisplayMode)
+    //鼠标操作的模式
+    enum MouseMode : int
+    {
+        MouseNone     //无操作
+        ,ClickWhite   //点击空白
+        ,ClickSlice   //点击保存临时选区到已选中列表
+        ,ClickTemp    //点击临时选区
+        ,DrawSlice    //框选一个临时选区
+        ,EditTemp     //编辑临时选区
+        ,EditSlice    //编辑已选中选区
+    };
+    //编辑类型
+    enum EditType : int
+    {
+        EditNone    //为编辑
+        ,EditLeft   //编辑选区左侧
+        ,EditRight  //标记选区右侧
+        ,EditMove   //移动选区
+    };
 };

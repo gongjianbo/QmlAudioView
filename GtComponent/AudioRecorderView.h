@@ -50,6 +50,7 @@ class AudioRecorderView : public QQuickPaintedItem
     Q_PROPERTY(qint64 position READ getPosition NOTIFY positionChanged)
     Q_PROPERTY(QString positionString READ getPositionString NOTIFY positionChanged)
     Q_PROPERTY(bool hasData READ getHasData NOTIFY hasDataChanged)
+    Q_PROPERTY(int selectCount READ getSelectCount NOTIFY selectCountChanged)
     //目前这些属性不会触发交互，暂时用member，在初始化时设置
     Q_PROPERTY(int leftPadding MEMBER leftPadding)
     Q_PROPERTY(int rightPadding MEMBER rightPadding)
@@ -63,6 +64,9 @@ class AudioRecorderView : public QQuickPaintedItem
     Q_PROPERTY(QColor cursorColor MEMBER cursorColor)
     Q_PROPERTY(QColor axisColor MEMBER axisColor)
     Q_PROPERTY(QColor textColor MEMBER textColor)
+    Q_PROPERTY(QColor selectColor MEMBER selectColor)
+    Q_PROPERTY(QColor sliceColor MEMBER sliceColor)
+    Q_PROPERTY(QColor sliceBorderColor MEMBER sliceBorderColor)
 public:
     explicit AudioRecorderView(QQuickItem *parent = nullptr);
     ~AudioRecorderView();
@@ -93,13 +97,24 @@ public:
     void setPosition(qint64 position);
     QString getPositionString() const;
 
+    //当前是否有数据
+    bool getHasData() const { return hasData; }
+    void setHasData(bool has);
+
+    //选中的选区分片个数
+    int getSelectCount() const { return selectSlice.size(); }
+
     //播放进度字节游标
     qint64 getAudioCursor() const { return audioCursor; }
     void setAudioCursor(qint64 cursor);
 
-    //当前是否有数据
-    bool getHasData() const;
-    void setHasData(bool has);
+    //鼠标操作
+    AudioRecorder::MouseMode getMouseMode() const { return mouseMode; }
+    void setMouseMode(AudioRecorder::MouseMode mode);
+
+    //编辑选区
+    AudioRecorder::EditType getEditType() const { return editType; }
+    void setEditType(AudioRecorder::EditType type);
 
     //停止录制/播放
     Q_INVOKABLE void stop();
@@ -136,6 +151,11 @@ public:
     //return 完整路径
     Q_INVOKABLE QString saveToCache(const QString &uuid);
 
+    //右键选中临时选区
+    Q_INVOKABLE void selectTempSlice();
+    //右键取消选区
+    Q_INVOKABLE void unselectSlice(int sliceIndex);
+
 protected:
     void paint(QPainter *painter) override;
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
@@ -162,6 +182,23 @@ protected:
     double calculateSpaceHelper(double valueRefRange, int dividend) const;
     //更新format设置
     void setAudioFormat(const QAudioFormat &format);
+    //根据pos.x计算数据的offset
+    qint64 calculateXOffset(int posX) const;
+    //根据offset计算x
+    int calculateOffsetX(qint64 offset) const;
+    //根据offset向[0,data.size()]两侧找符合条件的最值
+    //不能超过数据范围，不能重合
+    qint64 offsetInScope(qint64 startOffset, qint64 endOffset, bool toLeft) const;
+    //判断offset值是否在某个选区slice中，可传index获取对应的下标
+    bool offsetOnSelectSlice(qint64 offset, int &index) const;
+    //判断offset值是否在当前操作Slice中
+    bool offsetOnTempSlice(qint64 offset) const;
+    //检测两个点的距离是否符合限制
+    bool distanceOut(const QPoint &p1, const QPoint &p2, int limit=4) const;
+    //最小拉伸范围
+    qint64 minOffsetLimit() const;
+    //根据点击的位置来判断是拉伸还是移动
+    void changeEditType(qint64 startOffset, qint64 endOffset, qint64 currentOffset);
 
 signals:
     void recordStateChanged();
@@ -191,6 +228,12 @@ signals:
     void requestSaveFile(const QString &filepath);
     void loadFileFinished(const QString &filepath,const QAudioFormat &format,bool result);
     void saveFileFinished(const QString &filepath,const QAudioFormat &format,bool result);
+    //弹右键菜单进行选中
+    void requestSelectTempSlice(const QPoint &pos);
+    //弹右键菜单取消选中
+    void requestUnselectSlice(const QPoint &pos, int sliceIndex);
+    //选中个数
+    void selectCountChanged();
 
 public slots:
     //刷新，调用update
@@ -261,6 +304,27 @@ private:
     qint64 recordOffset{ 0 };
     QElapsedTimer recordElapse;
 
+    //音频选区
+    struct AudioSlice
+    {
+        qint64 startOffset; //选区起止，对应audioData.size()
+        qint64 endOffset;
+        qint64 startTemp; //保存原边界用于拖动时计算
+        qint64 endTemp;
+    };
+    //选区列表
+    QList<AudioSlice> selectSlice;
+    int selectIndex{ 0 };
+    //当前操作的选区
+    bool hasTemp{ false };
+    AudioSlice tempSlice;
+    //鼠标按下的pos
+    QPoint pressPos;
+    //鼠标操作模式
+    AudioRecorder::MouseMode mouseMode{ AudioRecorder::MouseNone };
+    //编辑操作-移动，拉伸等
+    AudioRecorder::EditType editType{ AudioRecorder::EditNone };
+
     //【】ui
     //四个边距
     //该版本刻度是一体的，所以刻度的宽高也算在padding里
@@ -285,4 +349,10 @@ private:
     QColor axisColor{ QColor(200,200,200) };
     //文本颜色
     QColor textColor{ QColor(200,200,200) };
+    //当前选区颜色
+    QColor selectColor{ QColor(200,200,150,150) };
+    //一般选区颜色
+    QColor sliceColor{ QColor(250,250,250,60) };
+    //选区边框颜色
+    QColor sliceBorderColor{ QColor(250,250,250,100) };
 };

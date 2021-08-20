@@ -1,6 +1,7 @@
 #include "AudioRecorderView.h"
 
 #include <cmath>
+#include <algorithm>
 
 #include <QCoreApplication>
 #include <QMouseEvent>
@@ -14,7 +15,7 @@
 AudioRecorderView::AudioRecorderView(QQuickItem *parent)
     : QQuickPaintedItem(parent)
 {
-    setAcceptedMouseButtons(Qt::AllButtons);
+    setAcceptedMouseButtons(Qt::LeftButton|Qt::RightButton);
     init();
     //默认的缓存目录
     setCacheDir(qApp->applicationDirPath()+"/AppData/Default/AudioRecorder");
@@ -105,17 +106,22 @@ void AudioRecorderView::setAudioCursor(qint64 cursor)
     }
 }
 
-bool AudioRecorderView::getHasData() const
-{
-    return hasData;
-}
-
 void AudioRecorderView::setHasData(bool has)
 {
     if(hasData!=has){
         hasData=has;
         emit hasDataChanged();
     }
+}
+
+void AudioRecorderView::setMouseMode(AudioRecorder::MouseMode mode)
+{
+    mouseMode=mode;
+}
+
+void AudioRecorderView::setEditType(AudioRecorder::EditType type)
+{
+    editType=type;
 }
 
 void AudioRecorderView::stop()
@@ -205,6 +211,25 @@ QString AudioRecorderView::saveToCache(const QString &uuid)
     return file_path;
 }
 
+void AudioRecorderView::selectTempSlice()
+{
+    if(hasTemp){
+        hasTemp=false;
+        selectSlice.append(tempSlice);
+        emit selectCountChanged();
+    }
+    refresh();
+}
+
+void AudioRecorderView::unselectSlice(int sliceIndex)
+{
+    if(sliceIndex>=0&&sliceIndex<selectSlice.size()){
+        selectSlice.removeAt(sliceIndex);
+        emit selectCountChanged();
+    }
+    refresh();
+}
+
 void AudioRecorderView::paint(QPainter *painter)
 {
     painter->setCompositionMode(QPainter::CompositionMode_Source);
@@ -264,7 +289,32 @@ void AudioRecorderView::paint(QPainter *painter)
         }
         painter->translate(-wave_x,-wave_y);
 
+        //画选区
+        painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
+        painter->setPen(sliceBorderColor);
+        if(hasTemp){
+            const int start_x=calculateOffsetX(tempSlice.startOffset);
+            const int end_x=calculateOffsetX(tempSlice.endOffset);
+            const QRect select_rect(start_x<end_x?start_x:end_x,topPadding,
+                                    std::abs(start_x-end_x),view_height);
+            painter->fillRect(select_rect,selectColor);
+            painter->drawLine(select_rect.topLeft(),select_rect.bottomLeft());
+            painter->drawLine(select_rect.topRight(),select_rect.bottomRight());
+        }
+        for(const AudioSlice &slice:selectSlice)
+        {
+            //selectSlice中的选区会保证start小于end
+            const int start_x=calculateOffsetX(slice.startOffset);
+            const int end_x=calculateOffsetX(slice.endOffset);
+            const QRect select_rect(start_x,topPadding,
+                                    std::abs(start_x-end_x),view_height);
+            painter->fillRect(select_rect,sliceColor);
+            painter->drawLine(select_rect.topLeft(),select_rect.bottomLeft());
+            painter->drawLine(select_rect.topRight(),select_rect.bottomRight());
+        }
+
         //画游标
+        painter->setCompositionMode(QPainter::CompositionMode_Source);
         painter->setPen(cursorColor);
         const int play_pos=double(getAudioCursor())/audioData.count()*view_width+leftPadding;
         painter->drawLine(play_pos,topPadding,
@@ -324,43 +374,204 @@ void AudioRecorderView::geometryChanged(const QRectF &newGeometry, const QRectF 
 
 void AudioRecorderView::mousePressEvent(QMouseEvent *event)
 {
+    setMouseMode(AudioRecorder::MouseNone);
+    setEditType(AudioRecorder::EditNone);
     event->accept();
+    //录制状态不处理点击
+    if(getRecordState()==AudioRecorder::Recording||getRecordState()==AudioRecorder::RecordPaused)
+        return;
     QRect plot_rect(leftPadding,rightPadding,plotAreaWidth(),plotAreaHeight());
+    //没数据或者点到范围外
     if(!getHasData()||!plot_rect.contains(event->pos()))
         return;
+    //判断是否点击在已有选区上
+    pressPos=event->pos();
+    const qint64 press_offset=calculateXOffset(pressPos.x());
+    int select_index;
     if(event->button()==Qt::LeftButton){
-        qint64 cursor=(double)(event->x()-leftPadding)/plotAreaWidth()*audioData.size();
-        cursor-=(cursor%(audioFormat.sampleSize()/8));
-        //非录制状态下点击移动游标
-        if(getRecordState()==AudioRecorder::Stopped||
-        getRecordState()==AudioRecorder::Playing||
-                getRecordState()==AudioRecorder::PlayPaused)
-        {
-           emit requestUpdateCursorOffset(cursor);
+        if(offsetOnSelectSlice(press_offset,select_index)){
+            //点在了选中的选区上
+            setMouseMode(AudioRecorder::ClickSlice);
+            selectIndex=select_index;
+            const AudioSlice &slice=selectSlice.at(select_index);
+            changeEditType(slice.startOffset,slice.endOffset,press_offset);
+        }else if(hasTemp&&offsetOnTempSlice(press_offset)){
+            //点在了临时选区上
+            //(offset>=tempSlice.startOffset&&offset<=tempSlice.endOffset);
+            setMouseMode(AudioRecorder::ClickTemp);
+            changeEditType(tempSlice.startOffset,tempSlice.endOffset,press_offset);
+        }else{
+            //点在了空白区域上
+            setMouseMode(AudioRecorder::ClickWhite);
         }
-
     }else if(event->button()==Qt::RightButton){
-
+        //当前操作的未保存的选区，在其上右键可以保存选区
+        if(hasTemp&&offsetOnTempSlice(press_offset)){
+            //范围内右键选择保存，则添加到selectSlice列表中
+            //通过右键菜单选择
+            //hasTemp=false;
+            //selectSlice.append(tempSlice);
+            emit requestSelectTempSlice(pressPos);
+        }else if(offsetOnSelectSlice(press_offset,select_index)){
+            //点击在选中的片段上可以取消选区
+            //通过右键菜单选择
+            //selectSlice.removeAt(select_index);
+            emit requestUnselectSlice(pressPos,select_index);
+        }else{
+            //取消临时选区
+            hasTemp=false;
+        }
     }
 }
 
 void AudioRecorderView::mouseMoveEvent(QMouseEvent *event)
 {
     event->accept();
-    if(!getHasData())
-        return;
+    const bool to_left=event->x()<pressPos.x();
+    //先判断是否鼠标放在已有选区上
+    if(getMouseMode()==AudioRecorder::ClickWhite){
+        //空白区域移动3px，增加一个临时选区
+        if(distanceOut(pressPos,event->pos())){
+            hasTemp=true;
+            setMouseMode(AudioRecorder::DrawSlice);
+        }
+    }else if(getMouseMode()==AudioRecorder::ClickSlice){
+        //已选中选区拖动
+        if(distanceOut(pressPos,event->pos())&&
+                selectIndex>=0&&selectIndex<selectSlice.size()){
+            hasTemp=true;
+            tempSlice=selectSlice.takeAt(selectIndex);
+            setMouseMode(AudioRecorder::EditSlice);
+        }
+    }else if(getMouseMode()==AudioRecorder::ClickTemp){
+        //临时选区上拖动
+        if(distanceOut(pressPos,event->pos())){
+            setMouseMode(AudioRecorder::EditTemp);
+        }
+    }
+
+    if(hasTemp){
+        //ClickWhite拖动后置为DrawSlice
+        if(getMouseMode()==AudioRecorder::DrawSlice){
+            //判断左右
+            if(to_left){
+                tempSlice.endOffset=calculateXOffset(pressPos.x());
+                tempSlice.startOffset=offsetInScope(calculateXOffset(event->x()),tempSlice.endOffset,true);
+            }else{
+                tempSlice.startOffset=calculateXOffset(pressPos.x());
+                tempSlice.endOffset=offsetInScope(tempSlice.startOffset,calculateXOffset(event->x()),false);
+            }
+        }else if(getMouseMode()==AudioRecorder::EditSlice||
+                 getMouseMode()==AudioRecorder::EditTemp){
+            const qint64 press_offset=calculateXOffset(pressPos.x());
+            const qint64 move_offset=calculateXOffset(event->x());
+            if(getEditType()==AudioRecorder::EditMove){
+                const qint64 range=tempSlice.endTemp-tempSlice.startTemp;
+                //判断左右
+                if(to_left){
+                    tempSlice.startOffset=offsetInScope(tempSlice.startTemp-press_offset+move_offset,tempSlice.endTemp,true);
+                    tempSlice.endOffset=tempSlice.startOffset+range;
+                }else{
+                    tempSlice.endOffset=offsetInScope(tempSlice.startTemp,tempSlice.endTemp-press_offset+move_offset,false);
+                    tempSlice.startOffset=tempSlice.endOffset-range;
+                }
+            }else if(getEditType()==AudioRecorder::EditLeft){
+                const qint64 calc_offset=offsetInScope(move_offset,tempSlice.endOffset,true);
+                if(calc_offset<tempSlice.endOffset-minOffsetLimit()){
+                    tempSlice.startOffset=calc_offset;
+                }else{
+                    tempSlice.startOffset=tempSlice.endOffset-minOffsetLimit();
+                }
+            }else if(getEditType()==AudioRecorder::EditRight){
+                const qint64 calc_offset=offsetInScope(tempSlice.startOffset,move_offset,false);
+                if(calc_offset>tempSlice.startOffset+minOffsetLimit()){
+                    tempSlice.endOffset=calc_offset;
+                }else{
+                    tempSlice.endOffset=tempSlice.startOffset+minOffsetLimit();
+                }
+            }
+        }
+    }
+    if(getMouseMode()!=AudioRecorder::MouseNone)
+        refresh();
 }
 
 void AudioRecorderView::mouseReleaseEvent(QMouseEvent *event)
 {
     event->accept();
-    if(!getHasData())
-        return;
+    const bool to_left=event->x()<pressPos.x();
     if(event->button()==Qt::LeftButton){
-
+        hasTemp=false;
+        //只点击就是更新游标位置
+        if(getMouseMode()==AudioRecorder::ClickWhite||
+                getMouseMode()==AudioRecorder::ClickSlice||
+                getMouseMode()==AudioRecorder::ClickTemp){
+            emit requestUpdateCursorOffset(calculateXOffset(pressPos.x()));
+        }else if(getMouseMode()==AudioRecorder::DrawSlice){
+            //拖动绘制一个新的临时选区
+            if(distanceOut(pressPos,event->pos())){
+                hasTemp=true;
+                //判断左右
+                if(to_left){
+                    tempSlice.endOffset=calculateXOffset(pressPos.x());
+                    tempSlice.startOffset=offsetInScope(calculateXOffset(event->x()),tempSlice.endOffset,true);
+                }else{
+                    tempSlice.startOffset=calculateXOffset(pressPos.x());
+                    tempSlice.endOffset=offsetInScope(tempSlice.startOffset,calculateXOffset(event->x()),false);
+                }
+            }
+        }else if(getMouseMode()==AudioRecorder::EditSlice||
+                 getMouseMode()==AudioRecorder::EditTemp){
+            //移动选区
+            hasTemp=true;
+            const qint64 press_offset=calculateXOffset(pressPos.x());
+            const qint64 move_offset=calculateXOffset(event->x());
+            if(getEditType()==AudioRecorder::EditMove){
+                const qint64 range=tempSlice.endTemp-tempSlice.startTemp;
+                //判断左右
+                if(to_left){
+                    tempSlice.startOffset=offsetInScope(tempSlice.startTemp-press_offset+move_offset,tempSlice.endTemp,true);
+                    tempSlice.endOffset=tempSlice.startOffset+range;
+                }else{
+                    tempSlice.endOffset=offsetInScope(tempSlice.startTemp,tempSlice.endTemp-press_offset+move_offset,false);
+                    tempSlice.startOffset=tempSlice.endOffset-range;
+                }
+            }else if(getEditType()==AudioRecorder::EditLeft){
+                const qint64 calc_offset=offsetInScope(move_offset,tempSlice.endOffset,true);
+                if(calc_offset<tempSlice.endOffset-minOffsetLimit()){
+                    tempSlice.startOffset=calc_offset;
+                }else{
+                    tempSlice.startOffset=tempSlice.endOffset-minOffsetLimit();
+                }
+            }else if(getEditType()==AudioRecorder::EditRight){
+                const qint64 calc_offset=offsetInScope(tempSlice.startOffset,move_offset,false);
+                if(calc_offset>tempSlice.startOffset+minOffsetLimit()){
+                    tempSlice.endOffset=calc_offset;
+                }else{
+                    tempSlice.endOffset=tempSlice.startOffset+minOffsetLimit();
+                }
+            }
+        }
     }else if(event->button()==Qt::RightButton){
 
     }
+    if(hasTemp){
+        //append或更新时要确保start<end，便于后面判断
+        if(tempSlice.startOffset>tempSlice.endOffset)
+            std::swap(tempSlice.startOffset,tempSlice.endOffset);
+        tempSlice.startTemp=tempSlice.startOffset;
+        tempSlice.endTemp=tempSlice.endOffset;
+        //如果移动的是已选中的选区，就放回列表中
+        if(getMouseMode()==AudioRecorder::EditSlice){
+            hasTemp=false;
+            //范围内右键选择保存，则添加到selectSlice列表中
+            selectSlice.append(tempSlice);
+        }
+    }
+    selectIndex=-1;
+    setMouseMode(AudioRecorder::MouseNone);
+    setEditType(AudioRecorder::EditNone);
+    refresh();
 }
 
 void AudioRecorderView::init()
@@ -432,6 +643,8 @@ void AudioRecorderView::clearData()
 {
     audioData.clear();
     sampleData.clear();
+    selectSlice.clear();
+    hasTemp=false;
     setAudioCursor(0);
     setDuration(0);
     setPosition(0);
@@ -644,6 +857,97 @@ void AudioRecorderView::setAudioFormat(const QAudioFormat &format)
     refresh();
 }
 
+qint64 AudioRecorderView::calculateXOffset(int posX) const
+{
+    qint64 offset=(double)(posX-leftPadding)/plotAreaWidth()*audioData.size();
+    //限定在有效数据范围内
+    if(offset>audioData.size()-1)
+        offset=audioData.size()-1;
+    offset-=(offset%(audioFormat.sampleSize()/8));
+    if(offset<0)
+        offset=0;
+    return offset;
+}
+
+int AudioRecorderView::calculateOffsetX(qint64 offset) const
+{
+    //在有数据时才会计算，暂时不用判空
+    return (double)offset/audioData.size()*plotAreaWidth()+leftPadding;
+}
+
+qint64 AudioRecorderView::offsetInScope(qint64 startOffset, qint64 endOffset, bool toLeft) const
+{
+    //在拼接时再处理数据的边界，这里不判断
+    //offset-=(offset%(audioFormat.sampleSize()/8));
+    int offset=0;
+    if(toLeft){ //找左侧
+        offset=startOffset;
+        for(const AudioSlice &slice:selectSlice)
+        {
+            if(slice.startOffset<endOffset&&slice.endOffset>offset)
+                offset=slice.endOffset;
+        }
+    }else{ //找右侧
+        offset=endOffset;
+        for(const AudioSlice &slice:selectSlice)
+        {
+            if(slice.endOffset>startOffset&&slice.startOffset<offset)
+                offset=slice.startOffset;
+        }
+    }
+    //限定在有效数据范围内
+    if(offset<0)
+        offset=0;
+    if(offset>audioData.size()-1)
+        offset=audioData.size()-1;
+    return offset;
+}
+
+bool AudioRecorderView::offsetOnSelectSlice(qint64 offset, int &index) const
+{
+    bool ret=false;
+    for(int i=0;i<selectSlice.size();i++)
+    {
+        if(offset>=selectSlice.at(i).startOffset&&offset<=selectSlice.at(i).endOffset)
+        {
+            ret=true;
+            index=i;
+            break;
+        }
+    }
+    return ret;
+}
+
+bool AudioRecorderView::offsetOnTempSlice(qint64 offset) const
+{
+    return (offset>=tempSlice.startOffset&&offset<=tempSlice.endOffset);
+}
+
+bool AudioRecorderView::distanceOut(const QPoint &p1, const QPoint &p2, int limit) const
+{
+    //目前值判断x的距离
+    return (std::abs(p1.x()-p2.x())>=limit);
+}
+
+qint64 AudioRecorderView::minOffsetLimit() const
+{
+    return (4.0/plotAreaWidth()*audioData.size());
+}
+
+void AudioRecorderView::changeEditType(qint64 startOffset, qint64 endOffset, qint64 currentOffset)
+{
+    //根据点击的位置来判断是拉伸还是移动
+    const int px_offset=minOffsetLimit();
+    //qDebug()<<"change edit type"<<px_offset<<startOffset<<endOffset<<currentOffset;
+    if(endOffset-px_offset<=currentOffset){
+        setEditType(AudioRecorder::EditRight);
+    }else if(startOffset+px_offset>=currentOffset){
+        setEditType(AudioRecorder::EditLeft);
+    }else{
+        setEditType(AudioRecorder::EditMove);
+    }
+}
+
 void AudioRecorderView::refresh()
 {
     update();
@@ -690,7 +994,7 @@ void AudioRecorderView::recordUpdate()
     //recordPoints为定时器计算的录制采样数，避免数据接收时间不均匀导致滚动不平滑
     //当和实际audioData采样数差值较大则强制刷新下
     recordPoints=recordOffset+seconds_points*recordElapse.elapsed()/1000;
-    if(qAbs(recordPoints-audioData.count()/sample_byte)>seconds_points){
+    if(std::abs(recordPoints-audioData.count()/sample_byte)>seconds_points){
         recordOffset=audioData.count()/sample_byte;
         recordElapse.restart();
     }
