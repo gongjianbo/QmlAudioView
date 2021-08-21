@@ -232,7 +232,6 @@ void AudioRecorderView::unselectSlice(int sliceIndex)
 
 void AudioRecorderView::paint(QPainter *painter)
 {
-    painter->setCompositionMode(QPainter::CompositionMode_Source);
     //暂时没有封装步骤
     //series区域的宽高
     const int view_width=plotAreaWidth();
@@ -290,7 +289,6 @@ void AudioRecorderView::paint(QPainter *painter)
         painter->translate(-wave_x,-wave_y);
 
         //画选区
-        painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
         painter->setPen(sliceBorderColor);
         if(hasTemp){
             const int start_x=calculateOffsetX(tempSlice.startOffset);
@@ -314,7 +312,6 @@ void AudioRecorderView::paint(QPainter *painter)
         }
 
         //画游标
-        painter->setCompositionMode(QPainter::CompositionMode_Source);
         painter->setPen(cursorColor);
         const int play_pos=double(getAudioCursor())/audioData.count()*view_width+leftPadding;
         painter->drawLine(play_pos,topPadding,
