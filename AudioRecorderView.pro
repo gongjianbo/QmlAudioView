@@ -6,6 +6,8 @@ QT += multimedia
 QT += concurrent
 
 CONFIG += c++11 utf8_source
+QMAKE_CFLAGS_WARN_ON = /W3
+QMAKE_CXXFLAGS += /sdl
 DEFINES += QT_DEPRECATED_WARNINGS
 
 INCLUDEPATH += $$PWD/GtComponent
