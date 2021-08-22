@@ -11,7 +11,7 @@ Window {
     height: 640
     title: qsTr("QML录音 (by: 龚建波 1992)")
 
-    RecorderPage{
+    RecorderPage {
         anchors.fill: parent
         anchors.margins: 12
     }

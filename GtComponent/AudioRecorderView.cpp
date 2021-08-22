@@ -3,8 +3,10 @@
 #include <cmath>
 #include <algorithm>
 
-#include <QCoreApplication>
+#include <QGuiApplication>
+#include <QCursor>
 #include <QMouseEvent>
+#include <QHoverEvent>
 #include <QPainter>
 #include <QFileInfo>
 #include <QFile>
@@ -16,6 +18,7 @@ AudioRecorderView::AudioRecorderView(QQuickItem *parent)
     : QQuickPaintedItem(parent)
 {
     setAcceptedMouseButtons(Qt::LeftButton|Qt::RightButton);
+    setAcceptHoverEvents(true);
     init();
     //默认的缓存目录
     setCacheDir(qApp->applicationDirPath()+"/AppData/Default/AudioRecorder");
@@ -377,7 +380,7 @@ void AudioRecorderView::mousePressEvent(QMouseEvent *event)
     //录制状态不处理点击
     if(getRecordState()==AudioRecorder::Recording||getRecordState()==AudioRecorder::RecordPaused)
         return;
-    QRect plot_rect(leftPadding,rightPadding,plotAreaWidth(),plotAreaHeight());
+    const QRect plot_rect(leftPadding,rightPadding,plotAreaWidth(),plotAreaHeight());
     //没数据或者点到范围外
     if(!getHasData()||!plot_rect.contains(event->pos()))
         return;
@@ -427,7 +430,7 @@ void AudioRecorderView::mouseMoveEvent(QMouseEvent *event)
     const bool to_left=event->x()<pressPos.x();
     //先判断是否鼠标放在已有选区上
     if(getMouseMode()==AudioRecorder::ClickWhite){
-        //空白区域移动3px，增加一个临时选区
+        //空白区域移动一定距离，增加一个临时选区
         if(distanceOut(pressPos,event->pos())){
             hasTemp=true;
             setMouseMode(AudioRecorder::DrawSlice);
@@ -569,6 +572,25 @@ void AudioRecorderView::mouseReleaseEvent(QMouseEvent *event)
     setMouseMode(AudioRecorder::MouseNone);
     setEditType(AudioRecorder::EditNone);
     refresh();
+}
+
+void AudioRecorderView::hoverEnterEvent(QHoverEvent *event)
+{
+    event->accept();
+    QGuiApplication::setOverrideCursor(QCursor(Qt::ArrowCursor));
+    updateCursorShape(event->pos());
+}
+
+void AudioRecorderView::hoverLeaveEvent(QHoverEvent *event)
+{
+    event->accept();
+    QGuiApplication::restoreOverrideCursor();
+}
+
+void AudioRecorderView::hoverMoveEvent(QHoverEvent *event)
+{
+    event->accept();
+    updateCursorShape(event->pos());
 }
 
 void AudioRecorderView::init()
@@ -928,13 +950,16 @@ bool AudioRecorderView::distanceOut(const QPoint &p1, const QPoint &p2, int limi
 
 qint64 AudioRecorderView::minOffsetLimit() const
 {
-    return (4.0/plotAreaWidth()*audioData.size());
+    return (5.0/plotAreaWidth()*audioData.size());
 }
 
 void AudioRecorderView::changeEditType(qint64 startOffset, qint64 endOffset, qint64 currentOffset)
 {
     //根据点击的位置来判断是拉伸还是移动
-    const int px_offset=minOffsetLimit();
+    int px_offset=minOffsetLimit();
+    //距离太小就平均分，避免太小只能单边拉伸
+    if(std::abs(endOffset-startOffset)<px_offset*2)
+        px_offset=std::abs(endOffset-startOffset)/2.0;
     //qDebug()<<"change edit type"<<px_offset<<startOffset<<endOffset<<currentOffset;
     if(endOffset-px_offset<=currentOffset){
         setEditType(AudioRecorder::EditRight);
@@ -943,6 +968,41 @@ void AudioRecorderView::changeEditType(qint64 startOffset, qint64 endOffset, qin
     }else{
         setEditType(AudioRecorder::EditMove);
     }
+}
+
+void AudioRecorderView::updateCursorShape(const QPoint &pos)
+{
+    //录制状态不处理样式
+    if(getRecordState()==AudioRecorder::Recording||getRecordState()==AudioRecorder::RecordPaused)
+        return;
+    const QRect plot_rect(leftPadding,rightPadding,plotAreaWidth(),plotAreaHeight());
+    Qt::CursorShape shape=Qt::ArrowCursor;
+    if(plot_rect.contains(pos)){
+        const qint64 press_offset=calculateXOffset(pos.x());
+        int select_index;
+        if(offsetOnSelectSlice(press_offset,select_index)){
+            //在选中的选区上
+            selectIndex=select_index;
+            const AudioSlice &slice=selectSlice.at(select_index);
+            shape=(Qt::CursorShape)getHoverShape(slice.startOffset,slice.endOffset,press_offset);
+        }else if(hasTemp&&offsetOnTempSlice(press_offset)){
+            //在临时选区上
+            shape=(Qt::CursorShape)getHoverShape(tempSlice.startOffset,tempSlice.endOffset,press_offset);
+        }
+    }
+    QGuiApplication::changeOverrideCursor(QCursor(shape));
+}
+
+int AudioRecorderView::getHoverShape(qint64 startOffset, qint64 endOffset, qint64 currentOffset) const
+{
+    const int px_offset=minOffsetLimit();
+    //qDebug()<<"change edit type"<<px_offset<<startOffset<<endOffset<<currentOffset;
+    if(endOffset-px_offset<=currentOffset){
+        return Qt::SizeHorCursor;
+    }else if(startOffset+px_offset>=currentOffset){
+        return Qt::SizeHorCursor;
+    }
+    return Qt::PointingHandCursor;
 }
 
 void AudioRecorderView::refresh()

@@ -1,12 +1,12 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
-import Gt.Component 1.0
+import Gt.Component 2.0
 
 //测试录音组件
 Item {
     id: control
 
-    AudioRecorderView{
+    AudioRecorderView {
         id: recorder
         anchors.fill: parent
         anchors.topMargin: btn_area.height+10
@@ -50,18 +50,18 @@ Item {
         }
     }
 
-    Column{
+    Column {
         id: btn_area
         spacing: 10
-        Row{
+        Row {
             spacing: 10
 
-            Label{
+            Label {
                 anchors.verticalCenter: parent.verticalCenter
                 text: " 输入设备:"
             }
             //测试时插了耳机笔记本就默认只有耳机的输入输出，没法测试多个io
-            ComboBox{
+            ComboBox {
                 id: input_comb
                 enabled: (recorder.recordState===AudioRecorder.Stopped)
                 width: 250
@@ -88,11 +88,11 @@ Item {
                     }
                 }
             }
-            Label{
+            Label {
                 anchors.verticalCenter: parent.verticalCenter
                 text: " 输出设备:"
             }
-            ComboBox{
+            ComboBox {
                 id: output_comb
                 enabled: (recorder.recordState===AudioRecorder.Stopped)
                 width: 250
@@ -111,59 +111,59 @@ Item {
             }
         }
 
-        Row{
+        Row {
             spacing: 10
 
-            Label{
+            Label {
                 anchors.verticalCenter: parent.verticalCenter
                 text: " 录制采样率Hz:"
             }
-            ComboBox{
+            ComboBox {
                 id: samplerate_comb
                 enabled: (recorder.recordState===AudioRecorder.Stopped)
                 width: 110
                 model: [8000,16000] //要支持更高的采样率待更新绘制逻辑
                 currentIndex: 1
             }
-            Label{
+            Label {
                 anchors.verticalCenter: parent.verticalCenter
                 text: " 采样精度bit:"
             }
-            ComboBox{
+            ComboBox {
                 id: samplesize_comb
                 enabled: (recorder.recordState===AudioRecorder.Stopped)
                 width: 80
                 model: [8,16]
                 currentIndex: 1
             }
-            Label{
+            Label {
                 anchors.verticalCenter: parent.verticalCenter
                 text: " 通道数:"
             }
-            ComboBox{
+            ComboBox {
                 id: channelcount_comb
                 enabled: (recorder.recordState===AudioRecorder.Stopped)
                 width: 80
                 model: [1,2]
                 currentIndex: 0
             }
-            Label{
+            Label {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "[duration]:"+recorder.durationString
             }
-            Label{
+            Label {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "[position]:"+recorder.positionString
             }
-            Label{
+            Label {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "[state]:"+recorder.recordState
             }
         }
 
-        Row{
+        Row {
             spacing: 10
-            MyButton{
+            MyButton {
                 enabled: (recorder.recordState!==AudioRecorder.Playing)&&
                          (recorder.recordState!==AudioRecorder.PlayPaused)
                 property bool onRecording: (recorder.recordState===AudioRecorder.Recording)
@@ -194,7 +194,7 @@ Item {
                     }
                 }
             }
-            MyButton{
+            MyButton {
                 enabled: (recorder.recordState!==AudioRecorder.Stopped)
                 text: "停止"
                 onClicked: {
@@ -207,7 +207,7 @@ Item {
                     //save_dialog.open();
                 }
             }
-            MyButton{
+            MyButton {
                 id: btn_play
                 enabled: (recorder.recordState!==AudioRecorder.Recording)&&
                          (recorder.recordState!==AudioRecorder.RecordPaused)&&
@@ -248,25 +248,25 @@ Item {
                 //    }
                 //}
             }
-            Item{
+            Item {
                 width: 20
                 height: 20
             }
-            MyButton{
+            MyButton {
                 enabled: (recorder.recordState===AudioRecorder.Stopped)&&recorder.hasData
                 text: "保存文件"
                 onClicked: recorder.saveToFile("./save.wav")
             }
-            MyButton{
+            MyButton {
                 enabled: (recorder.recordState===AudioRecorder.Stopped)
                 text: "加载文件"
                 onClicked: recorder.loadFromFile("./save.wav")
             }
-            Item{
+            Item {
                 width: 20
                 height: 20
             }
-            Label{
+            Label {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "[选区个数]:"+recorder.selectCount
             }

@@ -37,6 +37,8 @@
  * 2021-4-18 录制时采用定时器刷新，使曲线动画看起来更平滑
  * 2021-8-19 录制缓冲增大
  *           鼠标点击更新游标位置（播放和停止时可用）
+ * 2021-8-23 hover选区时更新鼠标样式cursorShape
+ *           优化了边界拖动判断
  */
 class AudioRecorderView : public QQuickPaintedItem
 {
@@ -162,6 +164,9 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+    void hoverEnterEvent(QHoverEvent *event) override;
+    void hoverLeaveEvent(QHoverEvent *event) override;
+    void hoverMoveEvent(QHoverEvent *event) override;
 
     //初始化输入输出等
     void init();
@@ -194,11 +199,15 @@ protected:
     //判断offset值是否在当前操作Slice中
     bool offsetOnTempSlice(qint64 offset) const;
     //检测两个点的距离是否符合限制
-    bool distanceOut(const QPoint &p1, const QPoint &p2, int limit=4) const;
+    bool distanceOut(const QPoint &p1, const QPoint &p2, int limit=5) const;
     //最小拉伸范围
     qint64 minOffsetLimit() const;
     //根据点击的位置来判断是拉伸还是移动
     void changeEditType(qint64 startOffset, qint64 endOffset, qint64 currentOffset);
+    //根据鼠标位置重置光标样式cursorShape
+    void updateCursorShape(const QPoint &pos);
+    //根据pos位置来判断是hover在边界还是中间
+    int getHoverShape(qint64 startOffset, qint64 endOffset, qint64 currentOffset) const;
 
 signals:
     void recordStateChanged();
