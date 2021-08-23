@@ -16,6 +16,7 @@
  * @details
  * 1.录制可参照Qt示例：audio和audioinput
  * 2.在操作录制、播放时会先调用stop，重置状态
+ * 3.采样精度支持16bit和8bit，采样率支持16k和8k，通道支持单声道和双声道
  *
  * @note
  * 1.在初版逻辑的基础上引入线程进程来录制和播放
@@ -23,13 +24,14 @@
  * 3.操作时，先预置本地状态再通知线程执行对应操作
  *   线程返回的数据先判断当前状态是否符合，
  *   直接用锁还是用信号槽？先用信号槽完成功能
- * 4.在界面复杂时刷新有卡顿
+ * 4.在界面复杂or显示屏过大时刷新有卡顿
  * 5.快速切换状态时由于多线程交互，会没法立即响应
  *   如快速连续点击录制/暂停
  *
  * @todo
  * 目前view和operate都持有独立的audioData，待改为共用
  * 由于功能增加，需要对现有逻辑封装和重构
+ * 对采样点进行封装，便于选中和截取
  *
  * @history
  * 2021-1-21 移除了刷新延时定时器，在实践的时候感觉刷新率没那么高
@@ -39,6 +41,7 @@
  *           鼠标点击更新游标位置（播放和停止时可用）
  * 2021-8-23 hover选区时更新鼠标样式cursorShape
  *           优化了边界拖动判断
+ *           选区拼接保存
  */
 class AudioRecorderView : public QQuickPaintedItem
 {
@@ -152,6 +155,8 @@ public:
     //（因为导入到音频库是以uuid为文件名，所以传入的文件名为uuid）
     //return 完整路径
     Q_INVOKABLE QString saveToCache(const QString &uuid);
+    //选区保存
+    Q_INVOKABLE void sliceToFile(const QString &filepath);
 
     //右键选中临时选区
     Q_INVOKABLE void selectTempSlice();
@@ -235,8 +240,10 @@ signals:
     //读写文件
     void requestLoadFile(const QString &filepath);
     void requestSaveFile(const QString &filepath);
+    void requestSaveSlice(const QString &filepath,const QList<AudioSlice> &sliceList);
     void loadFileFinished(const QString &filepath,const QAudioFormat &format,bool result);
     void saveFileFinished(const QString &filepath,const QAudioFormat &format,bool result);
+    void saveSliceFinished(const QString &filepath,const QAudioFormat &format,bool result);
     //弹右键菜单进行选中
     void requestSelectTempSlice(const QPoint &pos);
     //弹右键菜单取消选中
@@ -313,14 +320,6 @@ private:
     qint64 recordOffset{ 0 };
     QElapsedTimer recordElapse;
 
-    //音频选区
-    struct AudioSlice
-    {
-        qint64 startOffset; //选区起止，对应audioData.size()
-        qint64 endOffset;
-        qint64 startTemp; //保存原边界用于拖动时计算
-        qint64 endTemp;
-    };
     //选区列表
     QList<AudioSlice> selectSlice;
     int selectIndex{ 0 };

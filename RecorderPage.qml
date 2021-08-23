@@ -17,6 +17,10 @@ Item {
         onSaveFileFinished: {
             console.log("save file finished",result);
         }
+        onSaveSliceFinished: {
+            console.log("save slice finished",result);
+        }
+
         onRequestSelectTempSlice: {
             select_menu.x=pos.x;
             select_menu.y=pos.y;
@@ -265,6 +269,12 @@ Item {
             Item {
                 width: 20
                 height: 20
+            }
+            MyButton {
+                enabled: (recorder.recordState===AudioRecorder.Stopped)&&recorder.hasData&&
+                         (recorder.selectCount>0)
+                text: "保存选区"
+                onClicked: recorder.sliceToFile("./save.wav")
             }
             Label {
                 anchors.verticalCenter: parent.verticalCenter

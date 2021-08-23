@@ -214,6 +214,14 @@ QString AudioRecorderView::saveToCache(const QString &uuid)
     return file_path;
 }
 
+void AudioRecorderView::sliceToFile(const QString &filepath)
+{
+    if(selectSlice.isEmpty())
+        return;
+    setRecordState(AudioRecorder::Stopped);
+    emit requestSaveSlice(filepath,selectSlice);
+}
+
 void AudioRecorderView::selectTempSlice()
 {
     if(hasTemp){
@@ -597,6 +605,7 @@ void AudioRecorderView::init()
 {
     qRegisterMetaType<QAudioDeviceInfo>("QAudioDeviceInfo");
     qRegisterMetaType<QList<QAudioDeviceInfo>>("QList<QAudioDeviceInfo>");
+    qRegisterMetaType<QList<AudioSlice>>("QList<AudioSlice>");
     qRegisterMetaType<AudioRecorder::RecordState>("AudioRecorder::RecordState");
 
     ioThread=new QThread(this);
@@ -623,8 +632,10 @@ void AudioRecorderView::init()
 
     connect(this,&AudioRecorderView::requestLoadFile,ioOperate,&AudioRecorderOperate::doLoadFile);
     connect(this,&AudioRecorderView::requestSaveFile,ioOperate,&AudioRecorderOperate::doSaveFile);
+    connect(this,&AudioRecorderView::requestSaveSlice,ioOperate,&AudioRecorderOperate::doSaveSlice);
     connect(ioOperate,&AudioRecorderOperate::loadFileFinished,this,&AudioRecorderView::loadFileFinished);
     connect(ioOperate,&AudioRecorderOperate::saveFileFinished,this,&AudioRecorderView::saveFileFinished);
+    connect(ioOperate,&AudioRecorderOperate::saveSliceFinished,this,&AudioRecorderView::saveSliceFinished);
     connect(ioOperate,&AudioRecorderOperate::loadFileFinished,
             this,[this](const QString &filepath,const QAudioFormat &format,bool result){
         Q_UNUSED(filepath)
@@ -663,6 +674,7 @@ void AudioRecorderView::clearData()
     audioData.clear();
     sampleData.clear();
     selectSlice.clear();
+    emit selectCountChanged();
     hasTemp=false;
     setAudioCursor(0);
     setDuration(0);
@@ -882,7 +894,9 @@ qint64 AudioRecorderView::calculateXOffset(int posX) const
     //限定在有效数据范围内
     if(offset>audioData.size()-1)
         offset=audioData.size()-1;
-    offset-=(offset%(audioFormat.sampleSize()/8));
+    //如果是16bit-双声道，则需要步进为4字节
+    //计算之后得到的是对齐大小起始点的index，作为截止点可能会少取一个采样
+    offset-=(offset%(audioFormat.sampleSize()/8*audioFormat.channelCount()));
     if(offset<0)
         offset=0;
     return offset;
@@ -897,7 +911,6 @@ int AudioRecorderView::calculateOffsetX(qint64 offset) const
 qint64 AudioRecorderView::offsetInScope(qint64 startOffset, qint64 endOffset, bool toLeft) const
 {
     //在拼接时再处理数据的边界，这里不判断
-    //offset-=(offset%(audioFormat.sampleSize()/8));
     int offset=0;
     if(toLeft){ //找左侧
         offset=startOffset;

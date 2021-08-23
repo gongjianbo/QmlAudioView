@@ -104,3 +104,13 @@ public:
         ,EditMove   //移动选区
     };
 };
+
+//音频选区
+struct AudioSlice
+{
+    qint64 startOffset; //选区起止，对应audioData.size()
+    qint64 endOffset;
+    qint64 startTemp; //保存原边界用于拖动时计算
+    qint64 endTemp;
+};
+Q_DECLARE_METATYPE(AudioSlice)

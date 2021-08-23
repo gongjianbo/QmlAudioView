@@ -1,6 +1,7 @@
 #include "AudioRecorderOperate.h"
 
 #include <cmath>
+#include <algorithm>
 
 #include <QPainter>
 #include <QFileInfo>
@@ -184,7 +185,7 @@ void AudioRecorderOperate::doPlay(qint64 offset, const QAudioDeviceInfo &device)
 
     const QAudioFormat format=audioInput->inputFormat;
     if(offset>0&&format.sampleSize()>0){
-        offset-=(offset%(format.sampleSize()/8));
+        offset-=(offset%(format.sampleSize()/8*format.channelCount()));
         if(offset<0)
             offset=0;
         outputCount=offset;
@@ -268,6 +269,48 @@ void AudioRecorderOperate::doSaveFile(const QString &filepath)
 
     const bool result=audioOutput->saveToFile(audioData,audioInput->inputFormat,filepath);
     emit saveFileFinished(filepath,audioInput->inputFormat,result);
+}
+
+void AudioRecorderOperate::doSaveSlice(const QString &filepath, const QList<AudioSlice> &sliceList)
+{
+    stop();
+
+    auto align_offset=[this](qint64 offset)->qint64{
+        //限定在有效数据范围内
+        if(offset>audioData.size()-1)
+            offset=audioData.size()-1;
+        //如果是16bit-双声道，则需要步进为4字节
+        //计算之后得到的是对齐大小起始点的index，作为截止点可能会少取一个采样
+        offset-=(offset%(audioInput->inputFormat.sampleSize()/8*audioInput->inputFormat.channelCount()));
+        if(offset<0)
+            offset=0;
+        return offset;
+    };
+
+    //多个选区offset可能没有完全贴合
+    QByteArray slice_data;
+    //对齐数据后对offset start排序，最后再拼接
+    QList<AudioSlice> select_slice=sliceList;
+    for(AudioSlice &slice:select_slice)
+    {
+        if(slice.startOffset>slice.endOffset)
+            std::swap(slice.startOffset,slice.endOffset);
+        slice.startOffset=align_offset(slice.startOffset);
+        slice.endOffset=align_offset(slice.endOffset);
+    }
+    //start从小到大排序
+    std::sort(select_slice.begin(),select_slice.end(),
+              [](const AudioSlice &left, const AudioSlice &right)->bool{
+        return left.startOffset<right.startOffset;
+    });
+    //拼接选区
+    for(const AudioSlice &slice:select_slice)
+    {
+        slice_data.push_back(audioData.mid(slice.startOffset,slice.endOffset-slice.startOffset));
+    }
+
+    const bool result=audioOutput->saveToFile(slice_data,audioInput->inputFormat,filepath);
+    emit saveSliceFinished(filepath,audioInput->inputFormat,result);
 }
 
 void AudioRecorderOperate::doUpdateCursorOffset(qint64 offset)

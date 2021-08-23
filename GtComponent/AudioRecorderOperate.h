@@ -20,6 +20,7 @@
  * ui改为定时器滚动，这样就不受数据获取不及时的影响
  * @history
  * 2021-06-13 增加录制暂停恢复接口
+ * 2021-08-23 增加选区拼接保存接口
  */
 class AudioRecorderOperate : public QObject
         , public AudioRecorderCallback
@@ -53,6 +54,7 @@ signals:
     void cursorChanged(qint64 cursor);
     void loadFileFinished(const QString &filepath,const QAudioFormat &format,bool result);
     void saveFileFinished(const QString &filepath,const QAudioFormat &format,bool result);
+    void saveSliceFinished(const QString &filepath,const QAudioFormat &format,bool result);
 
 public slots:
     void init();
@@ -75,6 +77,8 @@ public slots:
     void doLoadFile(const QString &filepath);
     //写文件
     void doSaveFile(const QString &filepath);
+    //保存选取
+    void doSaveSlice(const QString &filepath,const QList<AudioSlice> &sliceList);
     //更新游标
     void doUpdateCursorOffset(qint64 offset);
 
