@@ -11,12 +11,12 @@
 class AudioRecorderCallback
 {
 public:
-    AudioRecorderCallback()=default;
-    virtual ~AudioRecorderCallback()=0;
+    AudioRecorderCallback() = default;
+    virtual ~AudioRecorderCallback() = 0;
 
     //虚函数接口用于数据读写回调
-    virtual qint64 readData(char *data, qint64 maxSize);
-    virtual qint64 writeData(const char *data, qint64 maxSize);
+    virtual qint64 readData(char* data, qint64 maxSize);
+    virtual qint64 writeData(const char* data, qint64 maxSize);
 };
 
 /**
@@ -30,13 +30,13 @@ class AudioRecorderBuffer : public QIODevice
 {
     Q_OBJECT
 public:
-    explicit AudioRecorderBuffer(AudioRecorderCallback *callback,QObject *parent = nullptr);
+    explicit AudioRecorderBuffer(AudioRecorderCallback* callback, QObject* parent = nullptr);
 
     //虚函数接口用于数据读写回调
-    qint64 readData(char *data, qint64 maxSize) override;
-    qint64 writeData(const char *data, qint64 maxSize) override;
+    qint64 readData(char* data, qint64 maxSize) override;
+    qint64 writeData(const char* data, qint64 maxSize) override;
 
 private:
     //读写数据时再回调view相关接口进行操作
-    AudioRecorderCallback *callbackPtr{ nullptr };
+    AudioRecorderCallback* callbackPtr{ nullptr };
 };

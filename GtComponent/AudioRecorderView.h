@@ -48,7 +48,7 @@ class AudioRecorderView : public QQuickPaintedItem
     Q_OBJECT
     Q_PROPERTY(AudioRecorder::RecordState recordState READ getRecordState NOTIFY recordStateChanged)
     Q_PROPERTY(AudioRecorder::DisplayMode displayMode READ getDisplayMode WRITE setDisplayMode NOTIFY displayModeChanged)
-    Q_PROPERTY(AudioRecorderDevice *deviceInfo READ getDeviceInfo CONSTANT)
+    Q_PROPERTY(AudioRecorderDevice* deviceInfo READ getDeviceInfo CONSTANT)
     Q_PROPERTY(QString cacheDir READ getCacheDir WRITE setCacheDir NOTIFY cacheDirChanged)
     Q_PROPERTY(qint64 duration READ getDuration NOTIFY durationChanged)
     Q_PROPERTY(QString durationString READ getDurationString NOTIFY durationChanged)
@@ -73,7 +73,7 @@ class AudioRecorderView : public QQuickPaintedItem
     Q_PROPERTY(QColor sliceColor MEMBER sliceColor)
     Q_PROPERTY(QColor sliceBorderColor MEMBER sliceBorderColor)
 public:
-    explicit AudioRecorderView(QQuickItem *parent = nullptr);
+    explicit AudioRecorderView(QQuickItem* parent = nullptr);
     ~AudioRecorderView();
 
     //录制状态
@@ -85,11 +85,11 @@ public:
     void setDisplayMode(AudioRecorder::DisplayMode mode);
 
     //设备信息
-    AudioRecorderDevice *getDeviceInfo() { return &deviceInfo; }
+    AudioRecorderDevice* getDeviceInfo() { return &deviceInfo; }
 
     //缓存目录，配合不带路径的save函数
     QString getCacheDir() const { return cacheDir; }
-    void setCacheDir(const QString &dir);
+    void setCacheDir(const QString& dir);
 
     //当前数据的总时长ms
     qint64 getDuration() const { return audioDuration; }
@@ -125,7 +125,7 @@ public:
     Q_INVOKABLE void stop();
     //播放
     //device:输入设备名称，建议在deviceInfo设置，这里置空
-    Q_INVOKABLE void play(const QString &deviceName=QString());
+    Q_INVOKABLE void play(const QString& deviceName = QString());
     //暂停播放
     Q_INVOKABLE void suspendPlay();
     //暂停恢复播放
@@ -135,10 +135,10 @@ public:
     //sampleSize:采样大小bit
     //channelCount:通道数
     //device:输入设备名称，建议在deviceInfo设置，这里置空
-    Q_INVOKABLE void record(int sampleRate=16000,
-                            int sampleSize=16,
-                            int channelCount=1,
-                            const QString &deviceName=QString());
+    Q_INVOKABLE void record(int sampleRate = 16000,
+                            int sampleSize = 16,
+                            int channelCount = 1,
+                            const QString& deviceName = QString());
     //暂停录制
     Q_INVOKABLE void suspendRecord();
     //暂停恢复录制
@@ -147,16 +147,16 @@ public:
     //从文件读取
     //目前不带解析器，只能解析44字节定长wav-pcm格式头
     //（与本组件生成的wav文件格式一致）
-    Q_INVOKABLE void loadFromFile(const QString &filepath);
+    Q_INVOKABLE void loadFromFile(const QString& filepath);
 
     //保存到文件
-    Q_INVOKABLE void saveToFile(const QString &filepath);
+    Q_INVOKABLE void saveToFile(const QString& filepath);
     //保存到cache路径
     //（因为导入到音频库是以uuid为文件名，所以传入的文件名为uuid）
     //return 完整路径
-    Q_INVOKABLE QString saveToCache(const QString &uuid);
+    Q_INVOKABLE QString saveToCache(const QString& uuid);
     //选区保存
-    Q_INVOKABLE void sliceToFile(const QString &filepath);
+    Q_INVOKABLE void sliceToFile(const QString& filepath);
 
     //右键选中临时选区
     Q_INVOKABLE void selectTempSlice();
@@ -164,14 +164,14 @@ public:
     Q_INVOKABLE void unselectSlice(int sliceIndex);
 
 protected:
-    void paint(QPainter *painter) override;
-    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
-    void hoverEnterEvent(QHoverEvent *event) override;
-    void hoverLeaveEvent(QHoverEvent *event) override;
-    void hoverMoveEvent(QHoverEvent *event) override;
+    void paint(QPainter* painter) override;
+    void geometryChanged(const QRectF& newGeometry, const QRectF& oldGeometry) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void hoverEnterEvent(QHoverEvent* event) override;
+    void hoverLeaveEvent(QHoverEvent* event) override;
+    void hoverMoveEvent(QHoverEvent* event) override;
 
     //初始化输入输出等
     void init();
@@ -191,7 +191,7 @@ protected:
     void calculateXSpace(double xAxisLen, qint64 xMin, qint64 xMax);
     double calculateSpaceHelper(double valueRefRange, int dividend) const;
     //更新format设置
-    void setAudioFormat(const QAudioFormat &format);
+    void setAudioFormat(const QAudioFormat& format);
     //根据pos.x计算数据的offset
     qint64 calculateXOffset(int posX) const;
     //根据offset计算x
@@ -200,33 +200,33 @@ protected:
     //不能超过数据范围，不能重合
     qint64 offsetInScope(qint64 startOffset, qint64 endOffset, bool toLeft) const;
     //判断offset值是否在某个选区slice中，可传index获取对应的下标
-    bool offsetOnSelectSlice(qint64 offset, int &index) const;
+    bool offsetOnSelectSlice(qint64 offset, int& index) const;
     //判断offset值是否在当前操作Slice中
     bool offsetOnTempSlice(qint64 offset) const;
     //检测两个点的距离是否符合限制
-    bool distanceOut(const QPoint &p1, const QPoint &p2, int limit=5) const;
+    bool distanceOut(const QPoint& p1, const QPoint& p2, int limit = 5) const;
     //最小拉伸范围
     qint64 minOffsetLimit() const;
     //根据点击的位置来判断是拉伸还是移动
     void changeEditType(qint64 startOffset, qint64 endOffset, qint64 currentOffset);
     //根据鼠标位置重置光标样式cursorShape
-    void updateCursorShape(const QPoint &pos);
+    void updateCursorShape(const QPoint& pos);
     //根据pos位置来判断是hover在边界还是中间
     int getHoverShape(qint64 startOffset, qint64 endOffset, qint64 currentOffset) const;
 
 signals:
     void recordStateChanged();
     void displayModeChanged();
-    void cacheDirChanged(const QString &dir);
+    void cacheDirChanged(const QString& dir);
     void durationChanged();
     void positionChanged();
     void hasDataChanged();
     //录制
-    void requestRecord(const QAudioDeviceInfo &device, const QAudioFormat &format);
+    void requestRecord(const QAudioDeviceInfo& device, const QAudioFormat& format);
     //停止录制/播放
     void requestStop();
     //播放
-    void requestPlay(qint64 offset, const QAudioDeviceInfo &device);
+    void requestPlay(qint64 offset, const QAudioDeviceInfo& device);
     //暂停播放
     void requestSuspendPlay();
     //暂停恢复播放
@@ -238,16 +238,16 @@ signals:
     //更新游标位置
     void requestUpdateCursorOffset(qint64 offset);
     //读写文件
-    void requestLoadFile(const QString &filepath);
-    void requestSaveFile(const QString &filepath);
-    void requestSaveSlice(const QString &filepath,const QList<AudioSlice> &sliceList);
-    void loadFileFinished(const QString &filepath,const QAudioFormat &format,bool result);
-    void saveFileFinished(const QString &filepath,const QAudioFormat &format,bool result);
-    void saveSliceFinished(const QString &filepath,const QAudioFormat &format,bool result);
+    void requestLoadFile(const QString& filepath);
+    void requestSaveFile(const QString& filepath);
+    void requestSaveSlice(const QString& filepath, const QList<AudioSlice>& sliceList);
+    void loadFileFinished(const QString& filepath, const QAudioFormat& format, bool result);
+    void saveFileFinished(const QString& filepath, const QAudioFormat& format, bool result);
+    void saveSliceFinished(const QString& filepath, const QAudioFormat& format, bool result);
     //弹右键菜单进行选中
-    void requestSelectTempSlice(const QPoint &pos);
+    void requestSelectTempSlice(const QPoint& pos);
     //弹右键菜单取消选中
-    void requestUnselectSlice(const QPoint &pos, int sliceIndex);
+    void requestUnselectSlice(const QPoint& pos, int sliceIndex);
     //选中个数
     void selectCountChanged();
 
@@ -255,7 +255,7 @@ public slots:
     //刷新，调用update
     void refresh();
     //添加数据
-    void recvData(const QByteArray &data);
+    void recvData(const QByteArray& data);
     //record offset刷新
     void recordUpdate();
 
@@ -270,9 +270,9 @@ private:
     //格式参数
     QAudioFormat audioFormat;
     //输入输出放到线程处理
-    QThread *ioThread{ nullptr };
+    QThread* ioThread{ nullptr };
     //输入输出操作管理，置于线程中
-    AudioRecorderOperate *ioOperate{ nullptr };
+    AudioRecorderOperate* ioOperate{ nullptr };
 
     //表示一个绘制用的抽样点信息
     struct SamplePoint

@@ -15,14 +15,14 @@ class AudioRecorderOutput : public QObject
 {
     Q_OBJECT
 public:
-    explicit AudioRecorderOutput(QObject *parent = nullptr);
+    explicit AudioRecorderOutput(QObject* parent = nullptr);
     ~AudioRecorderOutput();
 
     //开始播放
     //buffer:回调处理数据
     //device:输出设备名称
     //format:音频参数QAudioFormat，内部获取需要的成员值
-    bool startPlay(AudioRecorderBuffer *buffer, const QAudioDeviceInfo &device, const QAudioFormat &format);
+    bool startPlay(AudioRecorderBuffer* buffer, const QAudioDeviceInfo& device, const QAudioFormat& format);
     //结束播放
     void stopPlay();
     //暂停播放
@@ -33,7 +33,7 @@ public:
     void freePlay();
 
     //保存到文件
-    bool saveToFile(const QByteArray data,const QAudioFormat &format,const QString &filepath);
+    bool saveToFile(const QByteArray data, const QAudioFormat& format, const QString& filepath);
 
 signals:
     void stateChanged(QAudio::State state);
@@ -41,7 +41,7 @@ signals:
 
 private:
     //输入
-    QAudioOutput *audioOutput{ nullptr };
+    QAudioOutput* audioOutput{ nullptr };
     //最新设置的deviceinfo
     QAudioDeviceInfo outputDevice;
     //当前使用的deviceinfo

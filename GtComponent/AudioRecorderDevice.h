@@ -34,48 +34,48 @@ class AudioRecorderDevice : public QObject,
     Q_PROPERTY(QString currentInputName READ getCurrentInputName NOTIFY currentInputNameChanged)
     Q_PROPERTY(QString currentOutputName READ getCurrentOutputName NOTIFY currentOutputNameChanged)
 public:
-    explicit AudioRecorderDevice(QObject *parent = nullptr);
+    explicit AudioRecorderDevice(QObject* parent = nullptr);
     ~AudioRecorderDevice();
 
     //输入设备名列表
     QStringList getInputDeviceNames() const { return inputDeviceNames; }
-    void setInputDeviceNames(const QStringList &names);
+    void setInputDeviceNames(const QStringList& names);
 
     //输出设备名列表
     QStringList getOutputDeviceNames() const { return outputDeviceNames; }
-    void setOutputDeviceNames(const QStringList &names);
+    void setOutputDeviceNames(const QStringList& names);
 
     //当前选中的输入设备
     QString getCurrentInputName() const { return currentInputDeviceInfo.deviceName(); }
     QAudioDeviceInfo getCurrentInputInfo() const { return currentInputDeviceInfo; }
-    Q_INVOKABLE bool setCurrentInputName(const QString &name);
+    Q_INVOKABLE bool setCurrentInputName(const QString& name);
     Q_INVOKABLE bool setCurrentInputIndex(int index);
     Q_INVOKABLE void resetCurrentInput();
     //获取输入设备信息，devicename为空则用currentinfo
-    QAudioDeviceInfo getInputInfo(const QString &name) const;
+    QAudioDeviceInfo getInputInfo(const QString& name) const;
 
     //当前选中的输出设备
     QString getCurrentOutputName() const { return currentOutputDeviceInfo.deviceName(); }
     QAudioDeviceInfo getCurrentOutputInfo() const { return currentOutputDeviceInfo; }
-    Q_INVOKABLE bool setCurrentOutputName(const QString &name);
+    Q_INVOKABLE bool setCurrentOutputName(const QString& name);
     Q_INVOKABLE bool setCurrentOutputIndex(int index);
     Q_INVOKABLE void resetCurrentOutput();
     //获取输出设备信息，devicename为空则用currentinfo
-    QAudioDeviceInfo getOutputInfo(const QString &name) const;
+    QAudioDeviceInfo getOutputInfo(const QString& name) const;
 
     //输入设备列表
-    void setInputDeviceInfos(const QList<QAudioDeviceInfo> &infos);
+    void setInputDeviceInfos(const QList<QAudioDeviceInfo>& infos);
 
     //输出设备列表
-    void setOutputDeviceInfos(const QList<QAudioDeviceInfo> &infos);
+    void setOutputDeviceInfos(const QList<QAudioDeviceInfo>& infos);
 
 protected:
     //用来过滤设备插拔事件
-    bool nativeEventFilter(const QByteArray &eventType, void *message, long *result) override;
+    bool nativeEventFilter(const QByteArray& eventType, void* message, long* result) override;
 
 signals:
-    void inputDeviceInfosUpdated(const QList<QAudioDeviceInfo> &infos);
-    void outputDeviceInfosUpdated(const QList<QAudioDeviceInfo> &infos);
+    void inputDeviceInfosUpdated(const QList<QAudioDeviceInfo>& infos);
+    void outputDeviceInfosUpdated(const QList<QAudioDeviceInfo>& infos);
     void inputDeviceNamesChanged();
     void outputDeviceNamesChanged();
     void currentInputNameChanged();

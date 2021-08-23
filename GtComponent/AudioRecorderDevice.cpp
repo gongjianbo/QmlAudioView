@@ -10,17 +10,17 @@
 #include <QtConcurrentRun>
 #include <QDebug>
 
-AudioRecorderDevice::AudioRecorderDevice(QObject *parent) : QObject(parent)
+AudioRecorderDevice::AudioRecorderDevice(QObject* parent) : QObject(parent)
 {
     //connect(&futureWatcher,&QFutureWatcher::finished,this,[this](){});
     //更新了设备列表
-    connect(this,&AudioRecorderDevice::inputDeviceInfosUpdated,
-            this,&AudioRecorderDevice::setInputDeviceInfos);
-    connect(this,&AudioRecorderDevice::outputDeviceInfosUpdated,
-            this,&AudioRecorderDevice::setOutputDeviceInfos);
+    connect(this, &AudioRecorderDevice::inputDeviceInfosUpdated,
+            this, &AudioRecorderDevice::setInputDeviceInfos);
+    connect(this, &AudioRecorderDevice::outputDeviceInfosUpdated,
+            this, &AudioRecorderDevice::setOutputDeviceInfos);
     //延时刷新
     updateTimer.setSingleShot(true);
-    connect(&updateTimer,&QTimer::timeout,this,&AudioRecorderDevice::updateDeviceInfos);
+    connect(&updateTimer, &QTimer::timeout, this, &AudioRecorderDevice::updateDeviceInfos);
 
     //注册到qApp过滤native事件
     qApp->installNativeEventFilter(this);
@@ -34,31 +34,31 @@ AudioRecorderDevice::~AudioRecorderDevice()
 {
     //貌似析构的时候自动会remove
     qApp->removeNativeEventFilter(this);
-    if(!futureWatcher.isFinished())
+    if (!futureWatcher.isFinished())
         futureWatcher.waitForFinished();
 }
 
-void AudioRecorderDevice::setInputDeviceNames(const QStringList &names)
+void AudioRecorderDevice::setInputDeviceNames(const QStringList& names)
 {
-    if(inputDeviceNames!=names){
-        inputDeviceNames=names;
+    if (inputDeviceNames != names) {
+        inputDeviceNames = names;
         emit inputDeviceNamesChanged();
     }
 }
 
-void AudioRecorderDevice::setOutputDeviceNames(const QStringList &names)
+void AudioRecorderDevice::setOutputDeviceNames(const QStringList& names)
 {
-    if(outputDeviceNames!=names){
-        outputDeviceNames=names;
+    if (outputDeviceNames != names) {
+        outputDeviceNames = names;
         emit outputDeviceNamesChanged();
     }
 }
 
-bool AudioRecorderDevice::setCurrentInputName(const QString &name)
+bool AudioRecorderDevice::setCurrentInputName(const QString& name)
 {
-    for(auto &info:enableInputDeviceInfos){
-        if(info.deviceName()==name){
-            currentInputDeviceInfo=info;
+    for (auto& info : enableInputDeviceInfos) {
+        if (info.deviceName() == name) {
+            currentInputDeviceInfo = info;
             return true;
         }
     }
@@ -67,8 +67,8 @@ bool AudioRecorderDevice::setCurrentInputName(const QString &name)
 
 bool AudioRecorderDevice::setCurrentInputIndex(int index)
 {
-    if(index>=0&&index<enableInputDeviceInfos.count()){
-        currentInputDeviceInfo=enableInputDeviceInfos.at(index);
+    if (index >= 0 && index < enableInputDeviceInfos.count()) {
+        currentInputDeviceInfo = enableInputDeviceInfos.at(index);
         return true;
     }
     return false;
@@ -76,26 +76,26 @@ bool AudioRecorderDevice::setCurrentInputIndex(int index)
 
 void AudioRecorderDevice::resetCurrentInput()
 {
-    currentInputDeviceInfo=QAudioDeviceInfo::defaultInputDevice();
+    currentInputDeviceInfo = QAudioDeviceInfo::defaultInputDevice();
 }
 
-QAudioDeviceInfo AudioRecorderDevice::getInputInfo(const QString &name) const
+QAudioDeviceInfo AudioRecorderDevice::getInputInfo(const QString& name) const
 {
-    if(name.isEmpty()||currentInputDeviceInfo.deviceName()==name)
+    if (name.isEmpty() || currentInputDeviceInfo.deviceName() == name)
         return currentInputDeviceInfo;
-    for(auto &info:enableInputDeviceInfos){
-        if(info.deviceName()==name){
+    for (auto& info : enableInputDeviceInfos) {
+        if (info.deviceName() == name) {
             return info;
         }
     }
     return QAudioDeviceInfo::defaultInputDevice();
 }
 
-bool AudioRecorderDevice::setCurrentOutputName(const QString &name)
+bool AudioRecorderDevice::setCurrentOutputName(const QString& name)
 {
-    for(auto &info:enableOutputDeviceInfos){
-        if(info.deviceName()==name){
-            currentOutputDeviceInfo=info;
+    for (auto& info : enableOutputDeviceInfos) {
+        if (info.deviceName() == name) {
+            currentOutputDeviceInfo = info;
             return true;
         }
     }
@@ -104,8 +104,8 @@ bool AudioRecorderDevice::setCurrentOutputName(const QString &name)
 
 bool AudioRecorderDevice::setCurrentOutputIndex(int index)
 {
-    if(index>=0&&index<enableOutputDeviceInfos.count()){
-        currentOutputDeviceInfo=enableOutputDeviceInfos.at(index);
+    if (index >= 0 && index < enableOutputDeviceInfos.count()) {
+        currentOutputDeviceInfo = enableOutputDeviceInfos.at(index);
         return true;
     }
     return false;
@@ -113,30 +113,30 @@ bool AudioRecorderDevice::setCurrentOutputIndex(int index)
 
 void AudioRecorderDevice::resetCurrentOutput()
 {
-    currentOutputDeviceInfo=QAudioDeviceInfo::defaultOutputDevice();
+    currentOutputDeviceInfo = QAudioDeviceInfo::defaultOutputDevice();
 }
 
-QAudioDeviceInfo AudioRecorderDevice::getOutputInfo(const QString &name) const
+QAudioDeviceInfo AudioRecorderDevice::getOutputInfo(const QString& name) const
 {
-    if(name.isEmpty()||name==currentOutputDeviceInfo.deviceName())
+    if (name.isEmpty() || name == currentOutputDeviceInfo.deviceName())
         return currentOutputDeviceInfo;
-    for(auto &info:enableOutputDeviceInfos){
-        if(info.deviceName()==name){
+    for (auto& info : enableOutputDeviceInfos) {
+        if (info.deviceName() == name) {
             return info;
         }
     }
     return QAudioDeviceInfo::defaultOutputDevice();
 }
 
-void AudioRecorderDevice::setInputDeviceInfos(const QList<QAudioDeviceInfo> &infos)
+void AudioRecorderDevice::setInputDeviceInfos(const QList<QAudioDeviceInfo>& infos)
 {
     enableInputDeviceInfos.clear();
     QStringList name_list;
-    for(auto &info:infos)
+    for (auto& info : infos)
     {
         //暂时固定过滤8/16k的
-        if(info.supportedSampleRates().contains(8000)&&
-                info.supportedSampleRates().contains(16000)){
+        if (info.supportedSampleRates().contains(8000) &&
+                info.supportedSampleRates().contains(16000)) {
             enableInputDeviceInfos.push_back(info);
             name_list.push_back(info.deviceName());
         }
@@ -144,15 +144,15 @@ void AudioRecorderDevice::setInputDeviceInfos(const QList<QAudioDeviceInfo> &inf
     setInputDeviceNames(name_list);
 }
 
-void AudioRecorderDevice::setOutputDeviceInfos(const QList<QAudioDeviceInfo> &infos)
+void AudioRecorderDevice::setOutputDeviceInfos(const QList<QAudioDeviceInfo>& infos)
 {
     enableOutputDeviceInfos.clear();
     QStringList name_list;
-    for(auto &info:infos)
+    for (auto& info : infos)
     {
         //暂时固定过滤8/16k的
-        if(info.supportedSampleRates().contains(8000)&&
-                info.supportedSampleRates().contains(16000)){
+        if (info.supportedSampleRates().contains(8000) &&
+                info.supportedSampleRates().contains(16000)) {
             enableOutputDeviceInfos.push_back(info);
             name_list.push_back(info.deviceName());
         }
@@ -160,16 +160,16 @@ void AudioRecorderDevice::setOutputDeviceInfos(const QList<QAudioDeviceInfo> &in
     setOutputDeviceNames(name_list);
 }
 
-bool AudioRecorderDevice::nativeEventFilter(const QByteArray &eventType, void *message, long *result)
+bool AudioRecorderDevice::nativeEventFilter(const QByteArray& eventType, void* message, long* result)
 {
     Q_UNUSED(result);
-    if(eventType == "windows_generic_MSG" || eventType == "windows_dispatcher_MSG")
+    if (eventType == "windows_generic_MSG" || eventType == "windows_dispatcher_MSG")
     {
         MSG* msg = reinterpret_cast<MSG*>(message);
         //设备插拔，插入会触发两次，拔出会触发一次
-        if(msg&&msg->message == WM_DEVICECHANGE)
+        if (msg && msg->message == WM_DEVICECHANGE)
         {
-            qDebug()<<"device changed ...";
+            qDebug() << "device changed ...";
             updateTimer.start(500); //延迟500ms刷新设备列表
             //for(auto &info:QAudioDeviceInfo::availableDevices(QAudio::AudioInput))
             //    qDebug()<<info.deviceName()<<info.supportedSampleRates();
@@ -198,12 +198,12 @@ bool AudioRecorderDevice::nativeEventFilter(const QByteArray &eventType, void *m
 void AudioRecorderDevice::updateDeviceInfos()
 {
     //因为有updateTimer，所以不太可能无间隔触发
-    if(!futureWatcher.isFinished()){
-        qDebug()<<"update device info failed, futureWatcher is running";
+    if (!futureWatcher.isFinished()) {
+        qDebug() << "update device info failed, futureWatcher is running";
         return;
     }
 
-    QFuture<void> future = QtConcurrent::run([this]{
+    QFuture<void> future = QtConcurrent::run([this] {
         emit inputDeviceInfosUpdated(QAudioDeviceInfo::availableDevices(QAudio::AudioInput));
         emit outputDeviceInfosUpdated(QAudioDeviceInfo::availableDevices(QAudio::AudioOutput));
     });

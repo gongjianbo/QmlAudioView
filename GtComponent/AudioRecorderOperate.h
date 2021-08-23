@@ -27,7 +27,7 @@ class AudioRecorderOperate : public QObject
 {
     Q_OBJECT
 public:
-    explicit AudioRecorderOperate(QObject *parent = nullptr);
+    explicit AudioRecorderOperate(QObject* parent = nullptr);
     ~AudioRecorderOperate();
 
     //录制状态
@@ -35,9 +35,9 @@ public:
     void setRecordState(AudioRecorder::RecordState state);
 
     //获取到的录音数据
-    qint64 writeData(const char *data, qint64 maxSize) override;
+    qint64 writeData(const char* data, qint64 maxSize) override;
     //导出缓存数据
-    qint64 readData(char *data, qint64 maxSize) override;
+    qint64 readData(char* data, qint64 maxSize) override;
 
     //计算音频时长
     void calcDuration();
@@ -48,47 +48,47 @@ public:
 
 signals:
     void recordStateChanged(AudioRecorder::RecordState state);
-    void dataChanged(const QByteArray &newData);
+    void dataChanged(const QByteArray& newData);
     void durationChanged(qint64 duration);
     void positionChanged(qint64 position);
     void cursorChanged(qint64 cursor);
-    void loadFileFinished(const QString &filepath,const QAudioFormat &format,bool result);
-    void saveFileFinished(const QString &filepath,const QAudioFormat &format,bool result);
-    void saveSliceFinished(const QString &filepath,const QAudioFormat &format,bool result);
+    void loadFileFinished(const QString& filepath, const QAudioFormat& format, bool result);
+    void saveFileFinished(const QString& filepath, const QAudioFormat& format, bool result);
+    void saveSliceFinished(const QString& filepath, const QAudioFormat& format, bool result);
 
 public slots:
     void init();
-    void stop(bool update=false);
+    void stop(bool update = false);
     //停止录制/播放
     void doStop();
     //播放
-    void doPlay(qint64 offset, const QAudioDeviceInfo &device);
+    void doPlay(qint64 offset, const QAudioDeviceInfo& device);
     //暂停播放
     void doSuspendPlay();
     //暂停恢复
     void doResumePlay();
     //录制
-    void doRecord(const QAudioDeviceInfo &device, const QAudioFormat &format);
+    void doRecord(const QAudioDeviceInfo& device, const QAudioFormat& format);
     //暂停录制
     void doSuspendRecord();
     //恢复录制
     void doResumeRecord();
     //读文件
-    void doLoadFile(const QString &filepath);
+    void doLoadFile(const QString& filepath);
     //写文件
-    void doSaveFile(const QString &filepath);
+    void doSaveFile(const QString& filepath);
     //保存选取
-    void doSaveSlice(const QString &filepath,const QList<AudioSlice> &sliceList);
+    void doSaveSlice(const QString& filepath, const QList<AudioSlice>& sliceList);
     //更新游标
     void doUpdateCursorOffset(qint64 offset);
 
 private:
     //QAudioInput/Output处理数据时回调IODevice的接口
-    AudioRecorderBuffer *audioBuffer{ nullptr };
+    AudioRecorderBuffer* audioBuffer{ nullptr };
     //音频输入
-    AudioRecorderInput *audioInput{ nullptr };
+    AudioRecorderInput* audioInput{ nullptr };
     //音频输出
-    AudioRecorderOutput *audioOutput{ nullptr };
+    AudioRecorderOutput* audioOutput{ nullptr };
     //当前状态
     AudioRecorder::RecordState recordState{ AudioRecorder::Stopped };
 
