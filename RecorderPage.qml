@@ -82,7 +82,8 @@ Item {
                         currentIndex=index;
                     }else{
                         //正在使用的输入设备变更
-                        let is_record=(recorder.recordState===AudioRecorder.Recording);
+                        let is_record=(recorder.recordState===AudioRecorder.Recording)||
+                            (recorder.recordState===AudioRecorder.RecordPaused);
                         //如果为录制状态则弹出save对话框
                         if(!is_record)
                             return;
@@ -202,7 +203,8 @@ Item {
                 enabled: (recorder.recordState!==AudioRecorder.Stopped)
                 text: "停止"
                 onClicked: {
-                    let is_record=(recorder.recordState===AudioRecorder.Recording);
+                    let is_record=(recorder.recordState===AudioRecorder.Recording)||
+                        (recorder.recordState===AudioRecorder.RecordPaused);
                     recorder.stop();
                     //如果为录制状态则弹出save对话框
                     if(!is_record)

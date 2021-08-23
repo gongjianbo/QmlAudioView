@@ -151,12 +151,13 @@ public:
 
     //保存到文件
     Q_INVOKABLE void saveToFile(const QString& filepath);
-    //保存到cache路径
-    //（因为导入到音频库是以uuid为文件名，所以传入的文件名为uuid）
-    //return 完整路径
-    Q_INVOKABLE QString saveToCache(const QString& uuid);
     //选区保存
     Q_INVOKABLE void sliceToFile(const QString& filepath);
+    //保存到cache路径
+    //uuid:因为导入到音频库是以uuid为文件名，所以传入的文件名为uuid
+    //saveSlice:区分保存文件还是保存选区
+    //return 完整路径
+    Q_INVOKABLE QString saveToCache(const QString& uuid, bool saveSlice);
 
     //右键选中临时选区
     Q_INVOKABLE void selectTempSlice();
@@ -340,9 +341,11 @@ private:
     int leftPadding{ 60 };
     int rightPadding{ 6 };
     int topPadding{ 6 };
-    int bottomPadding{ 40 };
+    int bottomPadding{ 30 };
     //圆角
     int radius{ 0 };
+    //文本字体
+    QFont textFont;
     //背景色
     QColor backgroundColor{ QColor("#0E306A") };
     //图区域颜色
@@ -358,7 +361,7 @@ private:
     //文本颜色
     QColor textColor{ QColor(200,200,200) };
     //当前选区颜色
-    QColor selectColor{ QColor(200,200,150,150) };
+    QColor selectColor{ QColor(200,150,150,150) };
     //一般选区颜色
     QColor sliceColor{ QColor(250,250,250,60) };
     //选区边框颜色

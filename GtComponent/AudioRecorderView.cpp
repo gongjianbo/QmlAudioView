@@ -208,19 +208,24 @@ void AudioRecorderView::saveToFile(const QString& filepath)
     emit requestSaveFile(filepath);
 }
 
-QString AudioRecorderView::saveToCache(const QString& uuid)
-{
-    const QString file_path = QString("%1/%2.wav").arg(getCacheDir()).arg(uuid);
-    saveToFile(file_path);
-    return file_path;
-}
-
 void AudioRecorderView::sliceToFile(const QString& filepath)
 {
     if (selectSlice.isEmpty())
         return;
     setRecordState(AudioRecorder::Stopped);
     emit requestSaveSlice(filepath, selectSlice);
+}
+
+QString AudioRecorderView::saveToCache(const QString &uuid, bool saveSlice)
+{
+    const QString file_path = QString("%1/%2.wav").arg(getCacheDir()).arg(uuid);
+    if (saveSlice) {
+        sliceToFile(file_path);
+    }
+    else {
+        saveToFile(file_path);
+    }
+    return file_path;
 }
 
 void AudioRecorderView::selectTempSlice()
@@ -252,6 +257,8 @@ void AudioRecorderView::paint(QPainter* painter)
     const int wave_x = leftPadding;
     const int wave_y = view_height / 2 + topPadding;
 
+    //文本字体
+    painter->setFont(textFont);
     //背景色
     painter->setPen(Qt::NoPen);
     //painter->setRenderHint(QPainter::Antialiasing,true);
@@ -686,6 +693,9 @@ void AudioRecorderView::init()
 
     //抽样点绘制
     sampleData.reserve(10000); //预置元素内存
+    //文本字体
+    textFont.setFamily("Microsoft YaHei");
+    textFont.setPixelSize(14);
 }
 
 void AudioRecorderView::free()
