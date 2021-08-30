@@ -341,16 +341,17 @@ void AudioRecorderView::paint(QPainter* painter)
     painter->translate(wave_x, wave_y);
     QString y_text;
     painter->setPen(textColor);
-    painter->drawText(-5 - painter->fontMetrics().width("0"), painter->fontMetrics().height() / 2, "0");
+    //QFontMetrics.width在5.11弃用了，现改为horizontalAdvance
+    painter->drawText(-5 - painter->fontMetrics().horizontalAdvance("0"), painter->fontMetrics().height() / 2, "0");
     for (int i = yValueSpace; i < y_range / 2; i += yValueSpace)
     {
         y_px = i * y1ValueToPx;
         y_text = QString::number(i);
-        painter->drawText(-5 - painter->fontMetrics().width(y_text),
+        painter->drawText(-5 - painter->fontMetrics().horizontalAdvance(y_text),
                           -y_px + painter->fontMetrics().height() / 2,
                           y_text);
         y_text = QString::number(-i);
-        painter->drawText(-5 - painter->fontMetrics().width(y_text),
+        painter->drawText(-5 - painter->fontMetrics().horizontalAdvance(y_text),
                           y_px + painter->fontMetrics().height() / 2,
                           y_text);
     }
@@ -362,7 +363,7 @@ void AudioRecorderView::paint(QPainter* painter)
     painter->drawLine(leftPadding, topPadding + view_height, leftPadding + view_width, topPadding + view_height);
     const QString time_end = QTime(0, 0, 0).addMSecs(xTimeEnd).toString("hh:mm:ss.zzz");
     const int text_y = topPadding + view_height + painter->fontMetrics().ascent() + 5;
-    const int end_x = view_width + leftPadding - painter->fontMetrics().width(time_end);
+    const int end_x = view_width + leftPadding - painter->fontMetrics().horizontalAdvance(time_end);
     painter->drawText(end_x, text_y, time_end);
     for (qint64 i = -xTimeBegin % xValueSpace; i <= xTimeEnd; i += xValueSpace)
     {
