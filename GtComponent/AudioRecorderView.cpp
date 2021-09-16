@@ -618,6 +618,7 @@ void AudioRecorderView::mouseReleaseEvent(QMouseEvent* event)
 void AudioRecorderView::hoverEnterEvent(QHoverEvent* event)
 {
     event->accept();
+    //用QGuiApplication设置鼠标样式，避免在拖拽出组件区域后被重置为其他样式
     QGuiApplication::setOverrideCursor(QCursor(Qt::ArrowCursor));
     updateCursorShape(event->pos());
 }

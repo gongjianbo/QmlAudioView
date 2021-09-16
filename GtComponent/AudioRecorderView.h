@@ -361,7 +361,7 @@ private:
     //文本颜色
     QColor textColor{ QColor(200,200,200) };
     //当前选区颜色
-    QColor selectColor{ QColor(200,150,150,150) };
+    QColor selectColor{ QColor(200,150,150,100) };
     //一般选区颜色
     QColor sliceColor{ QColor(250,250,250,60) };
     //选区边框颜色
