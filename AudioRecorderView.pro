@@ -13,14 +13,12 @@ QMAKE_CXXFLAGS_WARN_ON = $$QMAKE_CFLAGS_WARN_ON
 QMAKE_CXXFLAGS += /sdl
 DEFINES += QT_DEPRECATED_WARNINGS
 
-#INCLUDEPATH += $$PWD/GtComponent
-#include($$PWD/GtComponent/GtComponent.pri)
+INCLUDEPATH += $$PWD/ARComponent
+include($$PWD/ARComponent/ARComponent.pri)
 
-SOURCES += \
-        main.cpp
+SOURCES += main.cpp
 
-RESOURCES += qml.qrc \
-    qml.qrc
+RESOURCES += qml.qrc
 
 # Additional import path used to resolve QML modules in Qt Creator's code model
 QML_IMPORT_PATH =
