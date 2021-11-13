@@ -32,6 +32,11 @@ ARPlayer::~ARPlayer()
 
 }
 
+ARSpace::WorkState ARPlayer::getState() const
+{
+    return playState;
+}
+
 void ARPlayer::setState(ARSpace::WorkState state)
 {
     playState = state;
@@ -45,12 +50,12 @@ void ARPlayer::play(const QAudioDeviceInfo &device)
     }
     stop();
 
-    if (sourcePtr->audioData.isEmpty())
+    if (sourcePtr->isEmpty())
         return;
 
     //todo format
     QAudioFormat format;
-    if (audioOutput->startPlay(sourcePtr->audioBuffer, device, format)) {
+    if (audioOutput->startPlay(sourcePtr->buffer(), device, format)) {
         //切换为播放状态
         setState(ARSpace::Playing);
     }
@@ -78,6 +83,6 @@ void ARPlayer::resume()
 void ARPlayer::stop()
 {
     audioOutput->stopPlay();
-    sourcePtr->outputCount = 0;
+    sourcePtr->stop();
     setState(ARSpace::Stopped);
 }

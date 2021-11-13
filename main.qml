@@ -29,7 +29,9 @@ Window {
             Layout.fillHeight: true
             color: "gray"
             radius: 4
+
             RecorderView {
+                id: recorder_view
                 anchors.fill: parent
             }
         }
@@ -47,18 +49,48 @@ Window {
 
                 Button {
                     text: "record"
+                    onClicked: {
+                        recorder_view.record()
+                    }
                 }
 
                 Button {
                     text: "play"
+                    onClicked: {
+                        recorder_view.play()
+                    }
                 }
 
                 Button {
                     text: "suspend"
+                    onClicked: {
+                        if(recorder_view.workState == ARSpace.Recording){
+                            recorder_view.suspendRecord()
+                        }else if(recorder_view.workState == ARSpace.Playing){
+                            recorder_view.suspendPlay()
+                        }
+                    }
                 }
 
                 Button {
                     text: "stop"
+                    onClicked: {
+                        recorder_view.stop()
+                    }
+                }
+
+                Button {
+                    text: "save"
+                    onClicked: {
+                        recorder_view.saveToFile("temp.wav")
+                    }
+                }
+
+                Button {
+                    text: "load"
+                    onClicked: {
+                        recorder_view.loadFromFile("temp.wav")
+                    }
                 }
             }//end button row
         }

@@ -16,7 +16,7 @@ public:
     ~ARRecorder();
 
     /// 状态
-    ARSpace::WorkState getState() const { return recordState; }
+    ARSpace::WorkState getState() const;
     void setState(ARSpace::WorkState state);
 
     /// 开始录制
@@ -27,7 +27,6 @@ public:
     void resume();
     /// 停止播放
     void stop();
-    /// todo 读取文件
 
 private:
     /// 当前状态

@@ -17,6 +17,11 @@ ARRecorder::~ARRecorder()
 
 }
 
+ARSpace::WorkState ARRecorder::getState() const
+{
+    return recordState;
+}
+
 void ARRecorder::setState(ARSpace::WorkState state)
 {
     recordState = state;
@@ -32,9 +37,10 @@ void ARRecorder::record(const QAudioDeviceInfo &device, const QAudioFormat &form
     stop();
 
     //录制时清空数据缓存
-    sourcePtr->audioData.clear();
+    sourcePtr->clear();
+    sourcePtr->setFormat(format);
 
-    if (audioInput->startRecord(sourcePtr->audioBuffer, device, format)) {
+    if (audioInput->startRecord(sourcePtr->buffer(), device, format)) {
         //切换为录制状态
         setState(ARSpace::Recording);
     }

@@ -27,9 +27,49 @@
  */
 class ARView : public QQuickPaintedItem
 {
+    Q_OBJECT
+    Q_PROPERTY(ARSpace::WorkState workState READ getWorkState NOTIFY workStateChanged)
 public:
     explicit ARView(QQuickItem* parent = nullptr);
     ~ARView();
+
+    /// 当前状态，播放-录制-暂停-停止等
+    ARSpace::WorkState getWorkState() const { return workState; }
+    void setWorkState(ARSpace::WorkState state);
+
+    /**
+     * @brief 录制
+     * @param sampleRate 采样率Hz
+     * @param sampleSize 采样大小bit
+     * @param channelCount 通道数
+     * @param deviceName 输入设备名称，建议在deviceInfo设置，这里置空
+     */
+    Q_INVOKABLE void record(int sampleRate = 16000,
+                            int sampleSize = 16,
+                            int channelCount = 1,
+                            const QString &deviceName = QString());
+    /// 暂停录制
+    Q_INVOKABLE void suspendRecord();
+    /// 暂停恢复录制
+    Q_INVOKABLE void resumeRecord();
+    /**
+    * @brief 播放
+    * @param deviceName 输入设备名称，建议在deviceInfo设置，这里置空
+    */
+    Q_INVOKABLE void play(const QString &deviceName = QString());
+    /// 暂停播放
+    Q_INVOKABLE void suspendPlay();
+    /// 暂停恢复播放
+    Q_INVOKABLE void resumePlay();
+    /// 停止录制/播放
+    Q_INVOKABLE void stop();
+
+    /// 保存音频数据到文件
+    Q_INVOKABLE bool saveToFile(const QString &filepath);
+    /// 从文件读取音频数据
+    /// 目前不带解析器，只能解析44字节定长wav-pcm格式头
+    /// （与本组件生成的wav文件格式一致）
+    Q_INVOKABLE bool loadFromFile(const QString &filepath);
 
 protected:
     void paint(QPainter* painter) override;
@@ -46,6 +86,9 @@ private:
     void init();
     /// 释放
     void free();
+
+signals:
+    void workStateChanged(ARSpace::WorkState state);
 
 private:
     /// 输入输出设备参数

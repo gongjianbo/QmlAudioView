@@ -14,7 +14,7 @@ struct ARRegister
         qRegisterMetaType<ARSpace::WorkState>("ARSpace::WorkState");
 
         qmlRegisterType<ARView>("AR.Component", 3, 0, "RecorderView");
-        qmlRegisterUncreatableType<ARSpace>("AR.Component", 3, 0, "RecorderSpace",
+        qmlRegisterUncreatableType<ARSpace>("AR.Component", 3, 0, "ARSpace",
                                             "can not instantiate RecorderSpace in qml");
         qmlRegisterUncreatableType<ARDevice>("AR.Component", 3, 0, "RecorderDevice",
                                              "can not instantiate RecorderDevice in qml");

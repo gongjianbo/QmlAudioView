@@ -16,10 +16,9 @@ public:
     ~ARPlayer();
 
     /// 状态
-    ARSpace::WorkState getState() const { return playState; }
+    ARSpace::WorkState getState() const;
     void setState(ARSpace::WorkState state);
 
-    //todo set offset
     /// 开始播放
     void play(const QAudioDeviceInfo &device);
     /// 暂停播放
