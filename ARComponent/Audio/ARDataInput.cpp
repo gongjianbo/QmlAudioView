@@ -6,14 +6,7 @@
 ARDataInput::ARDataInput(QObject *parent)
     : QObject(parent)
 {
-    //采样精度和声道数暂时默认16\1
-    //默认参数可以放到全局配置
-    inputFormat.setSampleRate(16000);
-    inputFormat.setSampleSize(16);
-    inputFormat.setChannelCount(1);
-    inputFormat.setCodec("audio/pcm");
-    inputFormat.setByteOrder(QAudioFormat::LittleEndian);
-    inputFormat.setSampleType(QAudioFormat::SignedInt);
+
 }
 
 ARDataInput::~ARDataInput()
@@ -23,6 +16,7 @@ ARDataInput::~ARDataInput()
 
 bool ARDataInput::startRecord(ARDataBuffer *buffer, const QAudioDeviceInfo &device, const QAudioFormat &format)
 {
+    qDebug() << "record" << device.deviceName() << format;
     stopRecord();
 
     inputDevice = device;
@@ -81,27 +75,28 @@ void ARDataInput::freeRecord()
     }
 }
 
-bool ARDataInput::loadFromFile(ARDataBuffer *buffer, const QString &filepath)
+bool ARDataInput::loadFromFile(QByteArray &data, QAudioFormat &format, const QString &filepath)
 {
     stopRecord();
 
     QFile file(filepath);
-    if (file.exists() && file.size() > 44 &&
-            file.open(QIODevice::ReadOnly)) {
+    if (file.exists() && file.size() > 44 && file.open(QIODevice::ReadOnly))
+    {
         ARWavHead head;
         file.read((char*)&head, 44);
         QByteArray pcm_data;
         if (ARWavHead::isValidWavHead(head)) {
             //暂时为全部读取
             pcm_data = file.readAll();
-            file.close();
         }
+        file.close();
+
         //采样率等置为相同参数
-        if (pcm_data.count() > 0 && pcm_data.count() % 2 == 0) {
-            inputFormat.setSampleRate(head.sampleRate);
-            inputFormat.setChannelCount(head.numChannels);
-            inputFormat.setSampleSize(head.bitsPerSample);
-            buffer->writeData(pcm_data.constData(), pcm_data.count());
+        if (pcm_data.count() > 0 && pcm_data.count() % head.numChannels == 0) {
+            format.setSampleRate(head.sampleRate);
+            format.setChannelCount(head.numChannels);
+            format.setSampleSize(head.bitsPerSample);
+            data = pcm_data;
             return true;
         }
     }

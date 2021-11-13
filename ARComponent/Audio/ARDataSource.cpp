@@ -52,6 +52,11 @@ qint64 ARDataSource::writeData(const char *data, qint64 maxSize)
     return maxSize;
 }
 
+qint64 ARDataSource::getDuration() const
+{
+    return audioDuration;
+}
+
 ARDataBuffer *ARDataSource::buffer()
 {
     return audioBuffer;
@@ -83,23 +88,25 @@ bool ARDataSource::isEmpty() const
 
 void ARDataSource::clear()
 {
+    outputCount = 0;
     audioData.clear();
     setDuration(0);
     emit dataChanged();
 }
 
-QByteArray &ARDataSource::data()
+QByteArray &ARDataSource::getData()
 {
     return audioData;
 }
 
-const QByteArray &ARDataSource::data() const
+const QByteArray &ARDataSource::getData() const
 {
     return audioData;
 }
 
 void ARDataSource::setData(const QByteArray &data)
 {
+    outputCount = 0;
     audioData = data;
     calcDuration();
     emit dataChanged();

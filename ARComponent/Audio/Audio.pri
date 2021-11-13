@@ -4,9 +4,7 @@ HEADERS += \
     $$PWD/ARDataOutput.h \
     $$PWD/ARDataSource.h \
     $$PWD/ARDefine.h \
-    $$PWD/ARDevice.h \
-    $$PWD/ARPlayer.h \
-    $$PWD/ARRecorder.h
+    $$PWD/ARDevice.h
 
 SOURCES += \
     $$PWD/ARDataBuffer.cpp \
@@ -14,6 +12,4 @@ SOURCES += \
     $$PWD/ARDataOutput.cpp \
     $$PWD/ARDataSource.cpp \
     $$PWD/ARDefine.cpp \
-    $$PWD/ARDevice.cpp \
-    $$PWD/ARPlayer.cpp \
-    $$PWD/ARRecorder.cpp
+    $$PWD/ARDevice.cpp

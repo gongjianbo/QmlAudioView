@@ -6,8 +6,8 @@
 
 #include "ARDevice.h"
 #include "ARDataSource.h"
-#include "ARPlayer.h"
-#include "ARRecorder.h"
+#include "ARDataInput.h"
+#include "ARDataOutput.h"
 
 /**
  * @brief 录音可视化组件
@@ -28,11 +28,17 @@
 class ARView : public QQuickPaintedItem
 {
     Q_OBJECT
+    Q_PROPERTY(ARDevice *device READ getDevice CONSTANT)
+    Q_PROPERTY(ARDataSource *source READ getSource CONSTANT)
     Q_PROPERTY(ARSpace::WorkState workState READ getWorkState NOTIFY workStateChanged)
 public:
     explicit ARView(QQuickItem* parent = nullptr);
     ~ARView();
 
+    /// 输入输出设备管理
+    ARDevice *getDevice() { return &device; }
+    /// 音频数据管理
+    ARDataSource *getSource() { return &source; }
     /// 当前状态，播放-录制-暂停-停止等
     ARSpace::WorkState getWorkState() const { return workState; }
     void setWorkState(ARSpace::WorkState state);
@@ -95,10 +101,11 @@ private:
     ARDevice device;
     /// 当前操作的音频数据，input/recorder和output/player可访问
     ARDataSource source;
-    /// 处理音频播放
-    ARPlayer *player{ nullptr };
+
     /// 处理音频录制
-    ARRecorder *recorder{ nullptr };
+    ARDataInput *recorder{ nullptr };
+    /// 处理音频播放
+    ARDataOutput *player{ nullptr };
 
     /// 当前工作状态
     ARSpace::WorkState workState{ ARSpace::Stopped };

@@ -51,25 +51,30 @@ void ARView::record(int sampleRate, int sampleSize,
     } break;
     }
 
+    recorder->stopRecord();
     //状态在recorder里修改
-    //source.clear();
+    source.clear();
     QAudioFormat format = source.getFormat();
     format.setSampleRate(sampleRate);
     format.setSampleSize(sampleSize);
     format.setChannelCount(channelCount);
-    //source.setFormat(format);
+    source.setFormat(format);
 
     const QAudioDeviceInfo device_info = device.getInputInfo(deviceName);
-    recorder->record(device_info, format);
-
-    setWorkState(ARSpace::Recording);
+    if (recorder->startRecord(source.buffer(), device_info, format)) {
+        //切换为录制状态
+        setWorkState(ARSpace::Recording);
+    }
+    else {
+        qDebug() << "start record failed";
+    }
 }
 
 void ARView::suspendRecord()
 {
     if (getWorkState() != ARSpace::Recording)
         return;
-    recorder->suspend();
+    recorder->suspendRecord();
     setWorkState(ARSpace::RecordPaused);
 }
 
@@ -77,7 +82,7 @@ void ARView::resumeRecord()
 {
     if (getWorkState() != ARSpace::RecordPaused)
         return;
-    recorder->resume();
+    recorder->resumeRecord();
     setWorkState(ARSpace::Recording);
 }
 
@@ -95,13 +100,24 @@ void ARView::play(const QString &deviceName)
     } break;
     }
 
-    setWorkState(ARSpace::Playing);
+    player->stopPlay();
+    if (source.isEmpty())
+        return;
+    const QAudioDeviceInfo device_info = device.getOutputInfo(deviceName);
+    if (player->startPlay(source.buffer(), device_info, source.getFormat())) {
+        //切换为播放状态
+        setWorkState(ARSpace::Playing);
+    }
+    else {
+        qDebug() << "start play failed";
+    }
 }
 
 void ARView::suspendPlay()
 {
     if (getWorkState() != ARSpace::Playing)
         return;
+    player->suspendPlay();
     setWorkState(ARSpace::PlayPaused);
 }
 
@@ -109,51 +125,38 @@ void ARView::resumePlay()
 {
     if (getWorkState() != ARSpace::PlayPaused)
         return;
+    player->resumePlay();
     setWorkState(ARSpace::Playing);
 }
 
 void ARView::stop()
 {
-    recorder->stop();
-    player->stop();
+    recorder->stopRecord();
+    player->stopPlay();
+    source.stop();
     setWorkState(ARSpace::Stopped);
 }
 
 bool ARView::saveToFile(const QString &filepath)
 {
     stop();
-
-    if (source.isEmpty())
-        return false;
-    //qfile不能生成目录
-    QFileInfo info(filepath);
-    if (!info.dir().exists())
-        info.dir().mkpath(info.absolutePath());
-
-    QFile file(filepath);
-    if (!file.open(QIODevice::WriteOnly)) {
-        return false;
-    }
-
-    QAudioFormat format = source.getFormat();
-    QByteArray data = source.data();
-    //暂时全部写入
-    ARWavHead head = ARWavHead::createWavHead(
-                format.sampleRate(),
-                format.sampleSize(),
-                format.channelCount(),
-                data.size());
-    file.write((const char*)(&head), sizeof(ARWavHead));
-    file.write(data);
-    file.close();
-    return true;
+    //目前source和input/output还没直接关联
+    return player->saveToFile(source.getData(), source.getFormat(), filepath);
 }
 
 bool ARView::loadFromFile(const QString &filepath)
 {
     stop();
-
-    return true;
+    QByteArray data;
+    QAudioFormat format = source.getFormat();
+    //目前source和input/output还没直接关联
+    const bool ret = recorder->loadFromFile(data, format, filepath);
+    if (ret) {
+        source.clear();
+        source.setFormat(format);
+        source.setData(data);
+    }
+    return ret;
 }
 
 void ARView::paint(QPainter *painter)
@@ -163,8 +166,21 @@ void ARView::paint(QPainter *painter)
 
 void ARView::init()
 {
-    player = new ARPlayer(&source, this);
-    recorder = new ARRecorder(&source, this);
+    recorder = new ARDataInput(this);
+    player = new ARDataOutput(this);
+
+    //播放数据取完了就结束
+    connect(&source, &ARDataSource::readFinished, this, &ARView::stop);
+
+    connect(recorder, &ARDataInput::stateChanged,
+            this, [this](QAudio::State state) {
+        qDebug() << "input state changed" << state;
+    });
+
+    connect(player, &ARDataOutput::stateChanged,
+            this, [this](QAudio::State state) {
+        qDebug() << "output state changed" << state;
+    });
 }
 
 void ARView::free()

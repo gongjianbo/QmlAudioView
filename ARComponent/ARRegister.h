@@ -18,6 +18,8 @@ struct ARRegister
                                             "can not instantiate RecorderSpace in qml");
         qmlRegisterUncreatableType<ARDevice>("AR.Component", 3, 0, "RecorderDevice",
                                              "can not instantiate RecorderDevice in qml");
+        qmlRegisterUncreatableType<ARDataSource>("AR.Component", 3, 0, "RecorderSource",
+                                                 "can not instantiate RecorderSource in qml");
     }
 };
 

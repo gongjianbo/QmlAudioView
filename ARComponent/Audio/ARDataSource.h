@@ -11,6 +11,7 @@
 class ARDataSource : public QObject, public ARCallback
 {
     Q_OBJECT
+    Q_PROPERTY(qint64 duration READ getDuration NOTIFY durationChanged)
 public:
     explicit ARDataSource(QObject *parent = nullptr);
     ~ARDataSource();
@@ -19,6 +20,9 @@ public:
     qint64 readData(char *data, qint64 maxSize) override;
     /// 录音or读文件
     qint64 writeData(const char *data, qint64 maxSize) override;
+
+    /// 音频数据时长
+    qint64 getDuration() const;
 
     /// input/output录制播放需要的QIODevice参数
     ARDataBuffer *buffer();
@@ -32,8 +36,8 @@ public:
     /// 清空数据
     void clear();
     /// 音频数据
-    QByteArray &data();
-    const QByteArray &data() const;
+    QByteArray &getData();
+    const QByteArray &getData() const;
     void setData(const QByteArray &data);
 
 private:

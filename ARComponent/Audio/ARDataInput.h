@@ -39,11 +39,12 @@ public:
      * @brief 从文件读取数据
      * 目前不带解析器，只能解析44字节定长wav-pcm格式头
      * （与本组件生成的wav文件格式一致）
-     * @param buffer 回调处理数据
+     * @param data 引用返回读取的数据
+     * @param format 文件数据格式参数，引用返回
      * @param filepath 文件路径
      * @return =true则操作成功
      */
-    bool loadFromFile(ARDataBuffer *buffer, const QString &filepath);
+    bool loadFromFile(QByteArray &data, QAudioFormat &format, const QString &filepath);
 
 signals:
     void stateChanged(QAudio::State state);

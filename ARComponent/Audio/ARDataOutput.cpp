@@ -6,15 +6,10 @@
 #include <QDateTime>
 #include <QDebug>
 
-ARDataOutput::ARDataOutput(QObject *parent) : QObject(parent)
+ARDataOutput::ARDataOutput(QObject *parent)
+    : QObject(parent)
 {
-    //采样精度和声道数暂时默认16\1
-    outputFormat.setSampleRate(16000);
-    outputFormat.setChannelCount(1);
-    outputFormat.setSampleSize(16);
-    outputFormat.setCodec("audio/pcm");
-    outputFormat.setByteOrder(QAudioFormat::LittleEndian);
-    outputFormat.setSampleType(QAudioFormat::SignedInt);
+
 }
 
 ARDataOutput::~ARDataOutput()
@@ -24,6 +19,7 @@ ARDataOutput::~ARDataOutput()
 
 bool ARDataOutput::startPlay(ARDataBuffer *buffer, const QAudioDeviceInfo &device, const QAudioFormat &format)
 {
+    qDebug() << "play" << device.deviceName() << format;
     stopPlay();
 
     outputDevice = device;

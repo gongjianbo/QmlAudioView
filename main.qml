@@ -22,6 +22,12 @@ Window {
             Layout.preferredHeight: 60
             color: "gray"
             radius: 4
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                x: 10
+                text: "duration(ms):" + recorder_view.source.duration
+            }
         }
 
         Rectangle {
