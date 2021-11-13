@@ -366,11 +366,11 @@ void AudioRecorderView::paint(QPainter *painter)
     for(int i=yValueSpace;i<0xFFFF/2;i+=yValueSpace)
     {
         y_px=i*y1ValueToPx;
-        y_text=QString::number(i);
+        y_text=QString::number(-i);
         painter->drawText(-5-painter->fontMetrics().width(y_text),
                           y_px+painter->fontMetrics().height()/2,
                           y_text);
-        y_text=QString::number(-i);
+        y_text=QString::number(i);
         painter->drawText(-5-painter->fontMetrics().width(y_text),
                           -y_px+painter->fontMetrics().height()/2,
                           y_text);
