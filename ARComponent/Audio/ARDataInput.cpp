@@ -3,10 +3,15 @@
 #include <QFile>
 #include <QDebug>
 
-ARDataInput::ARDataInput(QObject *parent)
+ARDataInput::ARDataInput(ARDataSource *source, QObject *parent)
     : QObject(parent)
+    , audioSource(source)
 {
+    //作为QAudioInput/Output的start启动参数，处理时回调read/write接口
+    audioBuffer = new ARDataBuffer(this, this);
+    audioBuffer->open(QIODevice::WriteOnly);
 
+    connect(audioSource, &ARDataSource::durationChanged, this, &ARDataInput::setDuration);
 }
 
 ARDataInput::~ARDataInput()
@@ -14,7 +19,28 @@ ARDataInput::~ARDataInput()
     freeRecord();
 }
 
-bool ARDataInput::startRecord(ARDataBuffer *buffer, const QAudioDeviceInfo &device, const QAudioFormat &format)
+qint64 ARDataInput::writeData(const char *data, qint64 maxSize)
+{
+    //双声道时数据为一左一右连续
+    QByteArray new_data = QByteArray(data, maxSize);
+    audioSource->appendData(new_data);
+    return maxSize;
+}
+
+qint64 ARDataInput::getDuration() const
+{
+    return inputDuration;
+}
+
+void ARDataInput::setDuration(qint64 duration)
+{
+    if (inputDuration != duration) {
+        inputDuration = duration;
+        emit durationChanged(duration);
+    }
+}
+
+bool ARDataInput::startRecord(const QAudioDeviceInfo &device, const QAudioFormat &format)
 {
     qDebug() << "record" << device.deviceName() << format;
     stopRecord();
@@ -40,8 +66,8 @@ bool ARDataInput::startRecord(ARDataBuffer *buffer, const QAudioDeviceInfo &devi
         connect(audioInput, &QAudioInput::notify, this, &ARDataInput::notify);
         audioInput->setBufferSize(inputFormat.sampleRate() * inputFormat.channelCount());
     }
-    buffer->reset();
-    audioInput->start(buffer);
+    audioBuffer->reset();
+    audioInput->start(audioBuffer);
     return true;
 }
 
@@ -70,6 +96,8 @@ void ARDataInput::freeRecord()
 {
     if (audioInput) {
         audioInput->stop();
+        audioBuffer->close();
+
         audioInput->deleteLater();
         audioInput = nullptr;
     }

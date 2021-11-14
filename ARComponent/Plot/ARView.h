@@ -15,8 +15,8 @@
  * @date 2021-11-12
  * @version v3.0
  * @details
- * 1.在v2.0版本实验了将输入输出放到线程，但绘制还是会卡顿，反而增加了复杂度，故取消线程
- * 主要问题还是在于数据抽样以及刷新绘制上，尽量保持匀速刷新
+ * 1.在v2.0版本实验了将输入输出放到线程，但是抽样和绘制还在主线程
+ * 所以并没有解决大尺寸绘制时卡顿的问题，后期试试把绘制放到线程，尽量保持匀速刷新
  * （在Qt源码中本身数据的读写就是在线程中进行的）
  * 2.最开始没有编辑的需求，所以波形图直接一个paintEvent中就抽样并绘制了
  * 但是后来逐渐增加了波形界面编辑的需求，所以需要对波形部分进行重构
@@ -30,6 +30,8 @@ class ARView : public QQuickPaintedItem
     Q_OBJECT
     Q_PROPERTY(ARDevice *device READ getDevice CONSTANT)
     Q_PROPERTY(ARDataSource *source READ getSource CONSTANT)
+    Q_PROPERTY(ARDataInput *input READ getInput CONSTANT)
+    Q_PROPERTY(ARDataOutput *output READ getOutput CONSTANT)
     Q_PROPERTY(ARSpace::WorkState workState READ getWorkState NOTIFY workStateChanged)
 public:
     explicit ARView(QQuickItem* parent = nullptr);
@@ -39,9 +41,15 @@ public:
     ARDevice *getDevice() { return &device; }
     /// 音频数据管理
     ARDataSource *getSource() { return &source; }
+    /// 输入输出
+    ARDataInput *getInput() { return input; }
+    ARDataOutput *getOutput() { return output; }
     /// 当前状态，播放-录制-暂停-停止等
     ARSpace::WorkState getWorkState() const { return workState; }
     void setWorkState(ARSpace::WorkState state);
+
+    /// 刷新
+    Q_INVOKABLE void refresh();
 
     /**
      * @brief 录制
@@ -79,10 +87,10 @@ public:
 
 protected:
     void paint(QPainter* painter) override;
-    //void geometryChanged(const QRectF& newGeometry, const QRectF& oldGeometry) override;
-    //void mousePressEvent(QMouseEvent* event) override;
-    //void mouseMoveEvent(QMouseEvent* event) override;
-    //void mouseReleaseEvent(QMouseEvent* event) override;
+    void geometryChanged(const QRectF& newGeometry, const QRectF& oldGeometry) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
     //void hoverEnterEvent(QHoverEvent* event) override;
     //void hoverLeaveEvent(QHoverEvent* event) override;
     //void hoverMoveEvent(QHoverEvent* event) override;
@@ -92,6 +100,8 @@ private:
     void init();
     /// 释放
     void free();
+    /// 数据或窗口变化，重新抽样数据点
+    void updateSampleData();
 
 signals:
     void workStateChanged(ARSpace::WorkState state);
@@ -103,14 +113,14 @@ private:
     ARDataSource source;
 
     /// 处理音频录制
-    ARDataInput *recorder{ nullptr };
+    ARDataInput *input{ nullptr };
     /// 处理音频播放
-    ARDataOutput *player{ nullptr };
-
+    ARDataOutput *output{ nullptr };
     /// 当前工作状态
     ARSpace::WorkState workState{ ARSpace::Stopped };
-    /// 绘制模式
-    ARSpace::DisplayMode displayMode{ ARSpace::Tracking };
+
+    /// 抽样数据
+    QVector<QPointF> sampleData;
 };
 
 

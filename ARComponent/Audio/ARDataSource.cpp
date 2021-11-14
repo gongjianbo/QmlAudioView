@@ -4,10 +4,6 @@
 ARDataSource::ARDataSource(QObject *parent)
     : QObject(parent)
 {
-    //作为QAudioInput/Output的start启动参数，处理时回调read/write接口
-    audioBuffer = new ARDataBuffer(this, this);
-    audioBuffer->open(QIODevice::ReadWrite);
-
     //采样精度和声道数暂时默认16\1
     //默认参数可以放到全局配置
     audioFormat.setSampleRate(16000);
@@ -20,36 +16,6 @@ ARDataSource::ARDataSource(QObject *parent)
 
 ARDataSource::~ARDataSource()
 {
-    audioBuffer->close();
-}
-
-qint64 ARDataSource::readData(char *data, qint64 maxSize)
-{
-    if (!data || maxSize < 1)
-        return 0;
-    const int data_size = audioData.count() - outputCount;
-    if (data_size <= 0) {
-        //stateChanged没有触发停止，懒得判断notify了
-        QTimer::singleShot(1, [this] { readFinished(); });
-        return 0;
-    }
-
-    const int read_size = (data_size >= maxSize) ? maxSize : data_size;
-    memcpy(data, audioData.constData() + outputCount, read_size);
-    outputCount += read_size;
-    //refresh(); 这个间隔回调太大了，不适合用来刷新播放进度
-    return read_size;
-}
-
-qint64 ARDataSource::writeData(const char *data, qint64 maxSize)
-{
-    //双声道时数据为一左一右连续
-    QByteArray new_data = QByteArray(data, maxSize);
-    audioData.append(new_data);
-    //计算当前时长
-    calcDuration();
-    emit dataChanged();
-    return maxSize;
 }
 
 qint64 ARDataSource::getDuration() const
@@ -57,14 +23,13 @@ qint64 ARDataSource::getDuration() const
     return audioDuration;
 }
 
-ARDataBuffer *ARDataSource::buffer()
+void ARDataSource::setDuration(qint64 duration)
 {
-    return audioBuffer;
-}
-
-void ARDataSource::stop()
-{
-    outputCount = 0;
+    if (audioDuration != duration) {
+        audioDuration = duration;
+        qDebug()<<"duration"<<duration;
+        emit durationChanged(duration);
+    }
 }
 
 QAudioFormat ARDataSource::getFormat() const
@@ -88,7 +53,6 @@ bool ARDataSource::isEmpty() const
 
 void ARDataSource::clear()
 {
-    outputCount = 0;
     audioData.clear();
     setDuration(0);
     emit dataChanged();
@@ -106,10 +70,27 @@ const QByteArray &ARDataSource::getData() const
 
 void ARDataSource::setData(const QByteArray &data)
 {
-    outputCount = 0;
     audioData = data;
     calcDuration();
     emit dataChanged();
+}
+
+void ARDataSource::appendData(const QByteArray &data)
+{
+    audioData.append(data);
+    //计算当前时长
+    calcDuration();
+    emit dataChanged();
+}
+
+qint64 ARDataSource::getSampleCount(bool singleChannel) const
+{
+    //除以采样点大小就是个数
+    qint64 sample_count = audioData.size() / (audioFormat.sampleSize() / 8);
+    if (singleChannel) {
+        sample_count /= audioFormat.channelCount();
+    }
+    return sample_count;
 }
 
 void ARDataSource::calcDuration()
@@ -127,11 +108,4 @@ void ARDataSource::calcDuration()
     setDuration(duration);
 }
 
-void ARDataSource::setDuration(qint64 duration)
-{
-    if (audioDuration != duration) {
-        audioDuration = duration;
-        qDebug()<<"duration"<<duration;
-        emit durationChanged(duration);
-    }
-}
+

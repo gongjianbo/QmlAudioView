@@ -81,11 +81,4 @@ public:
     };
     Q_ENUM(WorkState)
 
-    /// 显示模式
-    enum DisplayMode : int
-    {
-        FullRange   //绘制全部数据
-        , Tracking  //跟踪最新数据
-    };
-    Q_ENUM(DisplayMode)
 };

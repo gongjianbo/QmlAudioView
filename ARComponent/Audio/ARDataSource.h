@@ -8,7 +8,7 @@
  * @author 龚建波
  * @date 2021-11-12
  */
-class ARDataSource : public QObject, public ARCallback
+class ARDataSource : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(qint64 duration READ getDuration NOTIFY durationChanged)
@@ -16,18 +16,10 @@ public:
     explicit ARDataSource(QObject *parent = nullptr);
     ~ARDataSource();
 
-    /// 播放or导出
-    qint64 readData(char *data, qint64 maxSize) override;
-    /// 录音or读文件
-    qint64 writeData(const char *data, qint64 maxSize) override;
-
     /// 音频数据时长
     qint64 getDuration() const;
+    void setDuration(qint64 duration);
 
-    /// input/output录制播放需要的QIODevice参数
-    ARDataBuffer *buffer();
-    /// 结束播放，计数归0
-    void stop();
     /// 音频数据参数
     QAudioFormat getFormat() const;
     void setFormat(const QAudioFormat &format);
@@ -39,11 +31,13 @@ public:
     QByteArray &getData();
     const QByteArray &getData() const;
     void setData(const QByteArray &data);
+    void appendData(const QByteArray &data);
+    /// 采样点数，如果singleChannel=true,表示只算单个通道的采样点数，否则为所有通道的
+    qint64 getSampleCount(bool singleChannel = true) const;
 
 private:
     /// 根据格式计算音频数据时长
     void calcDuration();
-    void setDuration(qint64 duration);
 
 signals:
     void readFinished();
@@ -52,8 +46,6 @@ signals:
     void durationChanged(qint64 duration);
 
 private:
-    /// QAudioInput/Output处理数据时回调IODevice的接口
-    ARDataBuffer *audioBuffer{ nullptr };
     /// 音频数据
     QByteArray audioData;
     /// 数据格式，录制或读文件前设置
@@ -61,7 +53,7 @@ private:
 
     /// 音频时长，ms
     qint64 audioDuration{ 0 };
-    /// 输出数据计数，对应read/write接口
-    qint64 outputCount{ 0 };
+
+    friend class ARView;
 };
 

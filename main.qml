@@ -23,10 +23,17 @@ Window {
             color: "gray"
             radius: 4
 
-            Text {
+            Row {
                 anchors.verticalCenter: parent.verticalCenter
                 x: 10
-                text: "duration(ms):" + recorder_view.source.duration
+                spacing: 20
+                Text {
+                    text: "data duration(ms):" + recorder_view.input.duration
+                }
+
+                Text {
+                    text: "play position(ms):" + recorder_view.output.position
+                }
             }
         }
 

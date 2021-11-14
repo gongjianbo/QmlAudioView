@@ -5,27 +5,35 @@
 #include "ARDefine.h"
 #include "ARDevice.h"
 #include "ARDataBuffer.h"
+#include "ARDataSource.h"
 
 /**
  * @brief 音频输入，录制或者读文件
  * @author 龚建波
  * @date 2021-1-13
  */
-class ARDataInput : public QObject
+class ARDataInput : public QObject, public ARCallback
 {
     Q_OBJECT
+    Q_PROPERTY(qint64 duration READ getDuration NOTIFY durationChanged)
 public:
-    explicit ARDataInput(QObject *parent = nullptr);
+    explicit ARDataInput(ARDataSource *source, QObject *parent = nullptr);
     ~ARDataInput();
+
+    /// 录音or读文件
+    qint64 writeData(const char *data, qint64 maxSize) override;
+
+    /// 音频数据时长
+    qint64 getDuration() const;
+    void setDuration(qint64 duration);
 
     /**
      * @brief 开始录音
-     * @param buffer 回调处理数据
      * @param device 输入设备信息
      * @param format 音频参数QAudioFormat，内部获取需要的成员值
      * @return =true则操作正常，开始录音
      */
-    bool startRecord(ARDataBuffer *buffer, const QAudioDeviceInfo &device, const QAudioFormat &format);
+    bool startRecord(const QAudioDeviceInfo &device, const QAudioFormat &format);
     /// 结束录制
     void stopRecord();
     /// 暂停录制
@@ -49,10 +57,16 @@ public:
 signals:
     void stateChanged(QAudio::State state);
     void notify();
+    void durationChanged(qint64 duration);
 
 private:
+    /// QAudioInput/Output处理数据时回调IODevice的接口
+    ARDataBuffer *audioBuffer{ nullptr };
+    /// 数据存放
+    ARDataSource *audioSource{ nullptr };
     /// 输入
     QAudioInput *audioInput{ nullptr };
+
     /// 最新设置的deviceinfo
     QAudioDeviceInfo inputDevice;
     /// 当前使用的deviceinfo，start时不相同则重新new
@@ -62,5 +76,8 @@ private:
     /// 当前使用的录制format
     QAudioFormat currentFormat;
 
-    friend class ARRecorder;
+    /// 音频时长，ms
+    qint64 inputDuration{ 0 };
+
+    friend class ARView;
 };
