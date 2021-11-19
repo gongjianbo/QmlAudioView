@@ -235,13 +235,19 @@ void ARView::mousePressEvent(QMouseEvent *event)
     refresh();
 }
 
+void ARView::mouseMoveEvent(QMouseEvent *event)
+{
+    event->accept();
+    refresh();
+}
+
 void ARView::mouseReleaseEvent(QMouseEvent *event)
 {
     event->accept();
     refresh();
 }
 
-void ARView::mouseMoveEvent(QMouseEvent *event)
+void ARView::mouseDoubleClickEvent(QMouseEvent *event)
 {
     event->accept();
     refresh();

@@ -28,9 +28,13 @@
 class ARDevice : public QObject, public QAbstractNativeEventFilter
 {
     Q_OBJECT
+    /// 输入设备名称列表
     Q_PROPERTY(QStringList inputDeviceNames READ getInputDeviceNames NOTIFY inputDeviceNamesChanged)
+    /// 输出设备名称列表
     Q_PROPERTY(QStringList outputDeviceNames READ getOutputDeviceNames NOTIFY outputDeviceNamesChanged)
+    /// 当前输入设备名
     Q_PROPERTY(QString currentInputName READ getCurrentInputName NOTIFY currentInputNameChanged)
+    /// 当前输出设备名
     Q_PROPERTY(QString currentOutputName READ getCurrentOutputName NOTIFY currentOutputNameChanged)
 public:
     explicit ARDevice(QObject *parent = nullptr);

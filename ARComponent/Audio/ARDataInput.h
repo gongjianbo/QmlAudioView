@@ -15,6 +15,7 @@
 class ARDataInput : public QObject, public ARCallback
 {
     Q_OBJECT
+    /// 音频时长 ms
     Q_PROPERTY(qint64 duration READ getDuration NOTIFY durationChanged)
 public:
     explicit ARDataInput(ARDataSource *source, QObject *parent = nullptr);

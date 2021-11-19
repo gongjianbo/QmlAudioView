@@ -5,4 +5,10 @@ INCLUDEPATH += $$PWD/Plot
 include($$PWD/Plot/Plot.pri)
 
 HEADERS += \
-    $$PWD/ARRegister.h
+    $$PWD/ARDefine.h \
+    $$PWD/ARRegister.h \
+    $$PWD/ARView.h
+
+SOURCES += \
+    $$PWD/ARDefine.cpp \
+    $$PWD/ARView.cpp

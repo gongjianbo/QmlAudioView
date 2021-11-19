@@ -15,6 +15,7 @@
 class ARDataOutput : public QObject, public ARCallback
 {
     Q_OBJECT
+    /// 当前播放位置 ms
     Q_PROPERTY(qint64 position READ getPosition NOTIFY positionChanged)
 public:
     explicit ARDataOutput(ARDataSource *source, QObject *parent = nullptr);

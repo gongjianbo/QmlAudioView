@@ -86,14 +86,15 @@ public:
     Q_INVOKABLE bool loadFromFile(const QString &filepath);
 
 protected:
-    void paint(QPainter* painter) override;
-    void geometryChanged(const QRectF& newGeometry, const QRectF& oldGeometry) override;
-    void mousePressEvent(QMouseEvent* event) override;
-    void mouseReleaseEvent(QMouseEvent* event) override;
-    void mouseMoveEvent(QMouseEvent* event) override;
-    //void hoverEnterEvent(QHoverEvent* event) override;
-    //void hoverLeaveEvent(QHoverEvent* event) override;
-    //void hoverMoveEvent(QHoverEvent* event) override;
+    void paint(QPainter *painter) override;
+    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event);
+    //void hoverEnterEvent(QHoverEvent *event) override;
+    //void hoverLeaveEvent(QHoverEvent *event) override;
+    //void hoverMoveEvent(QHoverEvent *event) override;
 
 private:
     /// 初始化
