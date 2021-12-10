@@ -1,3 +1,6 @@
+# Warning
+Ready to change to a general audio data editing tool, not just recording, so the development of this version (V3) stopped. Subsequently, the project name audiorecorderview will be changed to qmlaudioview.准备改为通用的音频数据编辑工具，而不仅仅是录音，所以该版本（V3）停止开发。后续会将工程名AudioRecorderView改为QMLAudioView。
+
 # Audio Recorder View
 Recording component based on Qt5 QML. (基于Qt5 QML的录音组件)
 ###### （旧代码在 v1.0/v2.0 分支，QQ 交流群：647637553）
