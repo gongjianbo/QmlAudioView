@@ -2,7 +2,6 @@
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QFont>
-#include "ARRegister.h"
 
 int main(int argc, char *argv[])
 {
@@ -13,8 +12,6 @@ int main(int argc, char *argv[])
 	//QQuickWindow::setTextRenderType(QQuickWindow::NativeTextRendering);
 	QGuiApplication app(argc, argv);
 	QQmlApplicationEngine engine;
-
-    ARRegister::registerComponent(&engine);
 
 	const QUrl url(QStringLiteral("qrc:/main.qml"));
 	QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,
