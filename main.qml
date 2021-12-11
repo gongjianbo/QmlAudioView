@@ -9,5 +9,9 @@ Window {
     width: 960
     height: 640
     title: qsTr("QML Audio View (by: GongJianBo 1992)")
-    color: "darkCyan"
+    color: "white"
+
+    SimpleAudioDemo {
+        anchors.fill: parent
+    }
 }

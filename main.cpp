@@ -3,6 +3,7 @@
 #include <QQuickWindow>
 #include <QFont>
 #include "AVRegister.h"
+#include "SimpleAudioRecorder.h"
 
 int main(int argc, char *argv[])
 {
@@ -17,6 +18,7 @@ int main(int argc, char *argv[])
 
     //注册QML组件
     AudioView::registerComponent(&engine);
+    qmlRegisterType<SimpleAudioRecorder>("SimpleDemo", 1, 0, "SimpleAudioRecorder");
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,

@@ -16,7 +16,8 @@ QMAKE_CXXFLAGS += /sdl
 INCLUDEPATH += $$PWD/AudioViewComponent
 include($$PWD/AudioViewComponent/AudioViewComponent.pri)
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    SimpleAudioRecorder.cpp
 
 RESOURCES += qml.qrc
 
@@ -24,3 +25,6 @@ RESOURCES += qml.qrc
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+HEADERS += \
+    SimpleAudioRecorder.h
