@@ -11,7 +11,88 @@ Window {
     title: qsTr("QML Audio View (by: GongJianBo 1992)")
     color: "white"
 
-    SimpleAudioDemo {
+    ColumnLayout {
         anchors.fill: parent
+        spacing: 0
+        Rectangle {
+            id: header
+            Layout.preferredHeight: 32
+            Layout.fillWidth: true
+            z: 2
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: "#777777" }
+                GradientStop { position: 0.50; color: "#666666" }
+                GradientStop { position: 0.51; color: "#555555" }
+                GradientStop { position: 1.0; color: "#333333" }
+            }
+            ButtonGroup {
+                id: view_btn_group
+                buttons: [btn_audio_view, btn_simple_audio]
+            }
+            Row {
+                x: 10
+                spacing: 10
+                height: 30
+
+                Row {
+                    spacing: 1
+                    anchors.verticalCenter: parent.verticalCenter
+                    MyButton {
+                        id: btn_audio_view
+                        checkable: true
+                        text: "[Audio View]"
+                        normalBgColor: "transparent"
+                        radius: 0
+                        onClicked: {
+                            root_loader.source = "qrc:/AudioViewDemo.qml"
+                        }
+                    }
+
+                    MyButton {
+                        id: btn_simple_audio
+                        checkable: true
+                        checked: true
+                        text: "[Simple Audio]"
+                        normalBgColor: "transparent"
+                        radius: 0
+                        onClicked: {
+                            root_loader.source = "qrc:/SimpleAudioDemo.qml"
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: 2
+                    height: 20
+                    color: "#EEEEEE"
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+            }
+            Rectangle {
+                width: parent.width
+                height: 2
+                anchors.bottom: parent.bottom
+                color: "#2090FF"
+            }
+        }
+        Rectangle {
+            id: content
+            Layout.fillHeight: true
+            Layout.fillWidth: true
+            z: 1
+            color: "#EEEEEE"
+            Loader {
+                id: root_loader
+                anchors.fill: parent
+                source: "qrc:/SimpleAudioDemo.qml"
+            }
+        }
+        Rectangle {
+            id: footer
+            Layout.preferredHeight: 30
+            Layout.fillWidth: true
+            z: 2
+            color: "#555555"
+        }
     }
 }

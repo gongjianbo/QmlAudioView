@@ -47,20 +47,23 @@ Rectangle {
             margins: 20
         }
         spacing: 15
-        Button {
+        MyButton {
             id: btn_record
+            horizontalPadding: 24
             text: "录制"
             onClicked: {
                 recorder.record()
             }
         }
-        Button {
+        MyButton {
+            horizontalPadding: 24
             text: "播放"
             onClicked: {
                 recorder.play()
             }
         }
-        Button {
+        MyButton {
+            horizontalPadding: 24
             text: "暂停"
             enabled: (recorder.workState === SimpleAudioRecorder.Recording ||
                       recorder.workState === SimpleAudioRecorder.Playing)
@@ -72,7 +75,8 @@ Rectangle {
                 }
             }
         }
-        Button {
+        MyButton {
+            horizontalPadding: 24
             text: "停止"
             enabled: recorder.workState !== SimpleAudioRecorder.Stop
             onClicked: {
@@ -88,14 +92,16 @@ Rectangle {
             margins: 20
         }
         spacing: 15
-        Button {
+        MyButton {
+            horizontalPadding: 24
             text: "读文件"
             enabled: recorder.workState === SimpleAudioRecorder.Stop
             onClicked: {
                 recorder.loadFile("simple.wav")
             }
         }
-        Button {
+        MyButton {
+            horizontalPadding: 24
             text: "写文件"
             enabled: recorder.workState === SimpleAudioRecorder.Stop
             onClicked: {

@@ -2,5 +2,7 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>SimpleAudioDemo.qml</file>
+        <file>MyButton.qml</file>
+        <file>AudioViewDemo.qml</file>
     </qresource>
 </RCC>
