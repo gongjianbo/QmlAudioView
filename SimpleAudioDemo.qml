@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.12
 import SimpleDemo 1.0
 
 //简易录音组件的演示
+//龚建波 2021-12-11
 Rectangle {
     id: control
 

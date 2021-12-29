@@ -2,6 +2,7 @@
 /// 此文件放置一些全局定义
 /// 龚建波 2021-12-10
 #include <cmath>
+#include <vector>
 #include <QObject>
 #include "AVWavDefine.h"
 
@@ -30,6 +31,16 @@
     private: Q_PROPERTY(type propertyName READ getFunc NOTIFY notifySignal) \
     PROPERTY_GETSET(type, propertyName, defaultValue, getFunc, setFunc, notifySignal)
 
+/// delete删除后置位nullptr
+#define FREE_OBJECT(obj) if(obj){ delete obj; obj = nullptr; }
+#define FREE_ARRAY(arr) if(arr){ delete [] arr; arr = nullptr; }
+
+/// 参数加引号变成字符串
+#define OBJECT_NAME(obj) #obj
+
+/// 流输出变量名和变量值，int i = 0; qDebug()<<OS_OBJECT(i);
+#define OS_OBJECT(obj) OBJECT_NAME(obj)##":"<<obj
+
 /// 放一些枚举定义，全局变量等
 class AVGlobal : public QObject
 {
@@ -57,6 +68,20 @@ public:
         , PosCenter  //view中间，一般指series区域
     };
     Q_ENUM(Position)
+
+    /// 错误信息
+    enum ErrorType : int
+    {
+        NoError //无错误
+        , InputFormatError  //录制参数错误
+        , InputDeviceError  //录制设备错误
+        , InputStartError   //录制启动失败
+        , OutputFormatError //播放格式错误
+        , OutputDeviceError //播放设备错误
+        , OutputStartError  //播放启动失败
+        , OutputEmptyError  //无音频数据供播放
+    };
+    Q_ENUM(ErrorType)
 
     /// 参照Qt的浮点数比较函数
     static inline bool fuzzyIsEqual(double p1, double p2)

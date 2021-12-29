@@ -14,7 +14,7 @@
 class AVDataOutput : public QObject, public AVCallback
 {
     Q_OBJECT
-    /// 当前播放位置 ms
+    /// 播放位置，单位ms毫秒
     Q_PROPERTY(qint64 position READ getPosition NOTIFY positionChanged)
 public:
     explicit AVDataOutput(AVDataSource *source, QObject *parent = nullptr);
@@ -23,15 +23,22 @@ public:
     /// 播放or导出
     qint64 readData(char *data, qint64 maxSize) override;
 
-    /// 播放时长
+    /// 播放位置，单位ms毫秒
     qint64 getPosition() const;
     void setPosition(qint64 position);
 
-    /// 播放采样点位置
+    /// 播放位置，数据数组下标
     qint64 getCurrentIndex() const;
     void setCurrentIndex(qint64 index);
-    /// 鼠标点击波形位置设置播放的偏移
-    void setCurrentOffset(qint64 offset);
+    /// setCurrentIndex=0时，position为1frame，zero则将两者置0
+    void zeroCurrentIndex();
+
+    /// 播放起始位置
+    qint64 getStartIndex() const;
+    void setStartIndex(qint64 index);
+
+    /// 状态
+    QAudio::State getState() const;
 
     /**
      * @brief 开始播放
@@ -40,8 +47,10 @@ public:
      * @return =true则操作正常，开始播放
      */
     bool startPlay(const QAudioDeviceInfo &device, const QAudioFormat &format);
-    /// 结束播放
+    /// 结束播放，重置指示器位置到0
     void stopPlay();
+    /// 开始播放前先结束播放，如果已播放到尾则重置播放起始
+    void endPlay();
     /// 暂停播放
     void suspendPlay();
     /// 暂停后恢复
@@ -56,14 +65,16 @@ public:
      * @param filepath 文件路径
      * @return =true则操作成功
      */
-    bool saveToFile(const QByteArray data, const QAudioFormat &format, const QString &filepath);
+    //bool saveToFile(const QByteArray data, const QAudioFormat &format, const QString &filepath);
 
 signals:
+    void errorChanged(AVGlobal::ErrorType error);
     void stateChanged(QAudio::State state);
     void notify();
     void playFinished();
     void positionChanged(qint64 position);
     void currentIndexChanged(qint64 index);
+    void startIndexChanged(qint64 index);
 
 private:
     /// QAudioInput/Output处理数据时回调IODevice的接口
@@ -84,13 +95,14 @@ private:
 
     /// 输出数据计数，对应read/write接口
     qint64 outputCount{ 0 };
-    /// 设置光标位置开始播放
+    /// 继续播放的偏移
     qint64 outputOffset{ 0 };
 
-    /// 播放点的时间ms
-    qint64 currentPosition{ 0 };
-    /// 播放点的采样位置
-    qint64 currentIndex{ 0 };
-
-    friend class ARView;
+    /// 播放点的时间，单位ms毫秒
+    qint64 playPosition{ 0 };
+    /// 播放点的数据数组下标，当前位置
+    qint64 playCurrentIndex{ 0 };
+    /// 播放点的数据数组下标，开始播放的位置
+    /// 可以通过点击波形图任意位置修改起始点
+    qint64 playStartIndex{ 0 };
 };

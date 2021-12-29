@@ -18,20 +18,6 @@ AVDataSource::~AVDataSource()
 {
 }
 
-qint64 AVDataSource::getDuration() const
-{
-    return audioDuration;
-}
-
-void AVDataSource::setDuration(qint64 duration)
-{
-    if (audioDuration != duration) {
-        audioDuration = duration;
-        qDebug()<<__FUNCTION__<<duration;
-        emit durationChanged(duration);
-    }
-}
-
 QAudioFormat AVDataSource::getFormat() const
 {
     return audioFormat;
@@ -43,45 +29,109 @@ void AVDataSource::setFormat(const QAudioFormat &format)
         audioFormat = format;
         qDebug()<<__FUNCTION__<<format;
         calcDuration();
-        emit formathChanged();
+        emit formatChanged();
     }
+}
+
+int AVDataSource::getSampleRate() const
+{
+    return audioFormat.sampleRate();
+}
+
+void AVDataSource::setSampleRate(int sampleRate)
+{
+    QAudioFormat format = getFormat();
+    if (format.sampleRate() != sampleRate) {
+        format.setSampleRate(sampleRate);
+        setFormat(format);
+    }
+}
+
+int AVDataSource::getSampleSize() const
+{
+    return audioFormat.sampleSize();
+}
+
+void AVDataSource::setSampleSize(int sampleSize)
+{
+    QAudioFormat format = getFormat();
+    if (format.sampleSize() != sampleSize) {
+        format.setSampleSize(sampleSize);
+        setFormat(format);
+    }
+}
+
+int AVDataSource::getChannelCount() const
+{
+    return audioFormat.channelCount();
+}
+
+void AVDataSource::setChannelCount(int channelCount)
+{
+    QAudioFormat format = getFormat();
+    if (format.channelCount() != channelCount) {
+        format.setChannelCount(channelCount);
+        setFormat(format);
+    }
+}
+
+qint64 AVDataSource::getDuration() const
+{
+    return audioDuration;
 }
 
 bool AVDataSource::isEmpty() const
 {
-    return audioData.isEmpty();
+    return audioData.empty();
 }
 
 void AVDataSource::clear()
 {
     audioData.clear();
-    setDuration(0);
     emit dataChanged();
+
+    calcDuration();
 }
 
-QByteArray &AVDataSource::getData()
+qint64 AVDataSource::size() const
+{
+    return (qint64)audioData.size();
+}
+
+std::vector<char> &AVDataSource::getData()
 {
     return audioData;
 }
 
-const QByteArray &AVDataSource::getData() const
+const std::vector<char> &AVDataSource::getData() const
 {
     return audioData;
 }
 
-void AVDataSource::setData(const QByteArray &data)
+void AVDataSource::setData(const std::vector<char> &data)
 {
-    audioData = data;
-    calcDuration();
+    if (data.size() >= audioData.max_size()) {
+        qDebug()<<__FUNCTION__<<"data size out of range";
+        audioData.clear();
+    }
+    else {
+        audioData = data;
+    }
     emit dataChanged();
+
+    calcDuration();
 }
 
-void AVDataSource::appendData(const QByteArray &data)
+void AVDataSource::appendData(const std::vector<char> &data)
 {
-    audioData.append(data);
-    //计算当前时长
-    calcDuration();
+    if (audioData.size() + data.size() >= audioData.max_size()) {
+        qDebug()<<__FUNCTION__<<"data size out of range";
+        return;
+    }
+    audioData.insert(audioData.end(), data.cbegin(), data.cend());
     emit dataChanged();
+
+    calcDuration();
 }
 
 qint64 AVDataSource::getSampleCount(bool singleChannel) const
@@ -96,15 +146,20 @@ qint64 AVDataSource::getSampleCount(bool singleChannel) const
 
 void AVDataSource::calcDuration()
 {
-    //更新时长信息
+    //根据音频数据的参数和数据长度进行计算
     const int sample_rate = audioFormat.sampleRate();
     const int sample_byte = audioFormat.sampleSize() / 8;
     const int channel_count = audioFormat.channelCount();
     qint64 duration = 0;
-    if (sample_rate > 0 && audioData.size() > 0) {
+    if (audioData.size() > 0 && sample_rate > 0 && sample_byte > 0 && channel_count > 0) {
         //时长=采样总数/每秒的采样数
         //s time*1000=ms time
         duration = (audioData.size() / sample_byte) / (1.0 * channel_count * sample_rate) * 1000;
     }
-    setDuration(duration);
+    //更新时长信息
+    if (audioDuration != duration) {
+        audioDuration = duration;
+        //qDebug()<<__FUNCTION__<<duration;
+        emit durationChanged(duration);
+    }
 }

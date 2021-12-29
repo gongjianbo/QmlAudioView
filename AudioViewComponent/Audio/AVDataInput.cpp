@@ -22,8 +22,16 @@ AVDataInput::~AVDataInput()
 qint64 AVDataInput::writeData(const char *data, qint64 maxSize)
 {
     //双声道时数据为一左一右连续
-    QByteArray new_data = QByteArray(data, maxSize);
-    audioSource->appendData(new_data);
+    //QByteArray new_data = QByteArray(data, maxSize);
+    std::vector<char> new_data;
+    if (maxSize > 0 && new_data.max_size() > (quint64)maxSize) {
+        new_data.resize(maxSize);
+        memcpy(new_data.data(), data, maxSize);
+        audioSource->appendData(new_data);
+    }
+    else {
+        qDebug()<<__FUNCTION__<<"data size out of range";
+    }
     return maxSize;
 }
 
@@ -40,6 +48,14 @@ void AVDataInput::setDuration(qint64 duration)
     }
 }
 
+QAudio::State AVDataInput::getState() const
+{
+    if (audioInput) {
+        return audioInput->state();
+    }
+    return QAudio::StoppedState;
+}
+
 bool AVDataInput::startRecord(const QAudioDeviceInfo &device, const QAudioFormat &format)
 {
     qDebug() << "record" << device.deviceName() << format;
@@ -47,12 +63,23 @@ bool AVDataInput::startRecord(const QAudioDeviceInfo &device, const QAudioFormat
 
     inputDevice = device;
     inputFormat = format;
+    //清空已有的数据
+    if (audioSource) {
+        audioSource->clear();
+        audioSource->setFormat(format);
+    }
+    //无效的参数
     if (!inputFormat.isValid() || inputDevice.isNull()) {
         qDebug() << "record failed,sample rate:" << inputFormat.sampleRate()
                  << "device null:" << inputDevice.isNull() << inputDevice.supportedSampleRates();
+        if (!inputFormat.isValid()) {
+            emit errorChanged(AVGlobal::InputFormatError);
+        }
+        else if (inputDevice.isNull()) {
+            emit errorChanged(AVGlobal::InputDeviceError);
+        }
         return false;
     }
-
     //参数不相等才重新new
     if (audioInput && (currentDevice != inputDevice || currentFormat != inputFormat)) {
         freeRecord();
@@ -68,6 +95,10 @@ bool AVDataInput::startRecord(const QAudioDeviceInfo &device, const QAudioFormat
     }
     audioBuffer->reset();
     audioInput->start(audioBuffer);
+    if (audioInput->error() != QAudio::NoError) {
+        emit errorChanged(AVGlobal::InputStartError);
+        return false;
+    }
     return true;
 }
 
@@ -103,7 +134,7 @@ void AVDataInput::freeRecord()
     }
 }
 
-bool AVDataInput::loadFromFile(QByteArray &data, QAudioFormat &format, const QString &filepath)
+/*bool AVDataInput::loadFromFile(QByteArray &data, QAudioFormat &format, const QString &filepath)
 {
     stopRecord();
 
@@ -129,4 +160,4 @@ bool AVDataInput::loadFromFile(QByteArray &data, QAudioFormat &format, const QSt
         }
     }
     return false;
-}
+}*/

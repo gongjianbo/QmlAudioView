@@ -27,6 +27,9 @@ public:
     qint64 getDuration() const;
     void setDuration(qint64 duration);
 
+    /// 状态
+    QAudio::State getState() const;
+
     /**
      * @brief 开始录音
      * @param device 输入设备信息
@@ -52,9 +55,10 @@ public:
      * @param filepath 文件路径
      * @return =true则操作成功
      */
-    bool loadFromFile(QByteArray &data, QAudioFormat &format, const QString &filepath);
+    //bool loadFromFile(QByteArray &data, QAudioFormat &format, const QString &filepath);
 
 signals:
+    void errorChanged(AVGlobal::ErrorType error);
     void stateChanged(QAudio::State state);
     void notify();
     void durationChanged(qint64 duration);
@@ -78,6 +82,4 @@ private:
 
     /// 音频时长，ms
     qint64 inputDuration{ 0 };
-
-    friend class ARView;
 };

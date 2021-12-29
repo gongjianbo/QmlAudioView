@@ -1,5 +1,7 @@
 HEADERS += \
-    $$PWD/AVAbstractLayer.h
+    $$PWD/AVAbstractLayer.h \
+    $$PWD/AVSimpleView.h
 
 SOURCES += \
-    $$PWD/AVAbstractLayer.cpp
+    $$PWD/AVAbstractLayer.cpp \
+    $$PWD/AVSimpleView.cpp

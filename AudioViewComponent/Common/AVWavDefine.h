@@ -12,6 +12,7 @@
  * （数值以小端存储，不过pc一般默认小端存储，暂不特殊处理）
  * 参照：https://www.cnblogs.com/ranson7zop/p/7657874.html
  * 参照：https://www.cnblogs.com/Ph-one/p/6839892.html
+ * @note wav格式数据段大小为uint32，只支持到4GB
  */
 #pragma pack(push,1)
 /// wav格式头的RIFF块
