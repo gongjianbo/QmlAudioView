@@ -22,11 +22,8 @@ AVDataOutput::AVDataOutput(AVDataSource *source, QObject *parent)
             zeroCurrentIndex();
             return;
         }
-
         //用processedUSecs获取start到当前的us数，但是start后有点延迟
         //进度=已放时间和总时间之比*总字节数，注意时间单位
-        //-50是为了补偿时差，音画同步，这个50就是output的NotifyInterval
-        //（还有点问题就是快结束的时候尾巴上那点直接结束了，数据少的时候明显点）
         qint64 cur_pos = outputOffset + (audioOutput->processedUSecs() / 1000.0) /
                 audioSource->getDuration() * audioSource->size();
         if (cur_pos < 0) {
@@ -35,8 +32,13 @@ AVDataOutput::AVDataOutput(AVDataSource *source, QObject *parent)
         else if (cur_pos > outputCount) {
             cur_pos = outputCount;
         }
+        //减temp_offset是为了补偿缓冲区还未播放的时差，音画同步
+        int temp_offset = (audioOutput->bufferSize() - audioOutput->bytesFree());
+        if (temp_offset < 0) {
+            temp_offset = 0;
+        }
         //减一个采样做下标
-        setCurrentIndex(cur_pos - audioSource->getSampleSize() / 8);
+        setCurrentIndex(cur_pos - temp_offset - audioSource->getSampleSize() / 8);
     });
 }
 
@@ -196,11 +198,13 @@ bool AVDataOutput::startPlay(const QAudioDeviceInfo &device, const QAudioFormat 
         connect(audioOutput, &QAudioOutput::stateChanged, this, &AVDataOutput::stateChanged);
         connect(audioOutput, &QAudioOutput::notify, this, &AVDataOutput::notify);
         //目前用notify来控制进度刷新
-        audioOutput->setNotifyInterval(50);
+        audioOutput->setNotifyInterval(30);
         //缓冲区
         //audioOutput->setBufferSize(12800);
     }
     audioBuffer->reset();
+    //pull mode: m_audioOutput->start(m_generator.data());
+    //push mode: auto io = m_audioOutput->start();
     audioOutput->start(audioBuffer);
     //qDebug()<<audioOutput->bufferSize()<<"buffer";
     if (audioOutput->error() != QAudio::NoError) {

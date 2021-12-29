@@ -133,8 +133,13 @@ qint64 SimpleAudioRecorder::readData(char *data, qint64 maxSize)
     if (data_size <= 0)
     {
         // stateChanged没有触发停止，懒得判断notify了
-        QTimer::singleShot(1, [this]
-        { stop(); });
+        // 定时时间大于notifyInterval，使播放完整
+        const int sample_rate = audioFormat.sampleRate();
+        // 时长=采样总数/每秒的采样数
+        // s time*1000=ms time
+        qint64 duration = (audioOutput->bufferSize() / 2) / (1.0 * sample_rate) * 1000;
+        // 这里播放结束时会进入多次，所以需要保存一个标志，使只定时一次
+        QTimer::singleShot(duration + 30, [this]{ stop(); });
         return 0;
     }
 
@@ -367,10 +372,14 @@ void SimpleAudioRecorder::play()
             if(getDuration() > 0){
                 //用processedUSecs获取start到当前的us数，但是start后有点延迟
                 //进度=已放时间和总时间之比*总字节数，注意时间单位
-                //-notifyInterval是为了补偿时差，音画同步
-                //（还有点问题就是快结束的时候尾巴上那点直接结束了，数据少的时候明显点）
-                playCount = (audioOutput->processedUSecs() / 1000.0 - audioOutput->notifyInterval()) /
-                        audioDuration*audioData.count();
+                playCount = (audioOutput->processedUSecs() / 1000.0) /
+                        audioDuration * audioData.count();
+                //减temp_offset是为了补偿缓冲区还未播放的时差，音画同步
+                int temp_offset = (audioOutput->bufferSize() - audioOutput->bytesFree());
+                if (temp_offset < 0) {
+                    temp_offset = 0;
+                }
+                playCount -= temp_offset;
                 if(playCount > outputCount)
                     playCount = outputCount;
                 updatePosition();

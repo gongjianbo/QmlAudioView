@@ -94,6 +94,8 @@ bool AVDataInput::startRecord(const QAudioDeviceInfo &device, const QAudioFormat
         audioInput->setBufferSize(inputFormat.sampleRate() * inputFormat.channelCount());
     }
     audioBuffer->reset();
+    //pull mode: m_audioInput->start(m_audioInfo.data());
+    //push mode: auto io = m_audioInput->start();
     audioInput->start(audioBuffer);
     if (audioInput->error() != QAudio::NoError) {
         emit errorChanged(AVGlobal::InputStartError);
