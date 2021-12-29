@@ -17,7 +17,7 @@ class SimpleAudioRecorder;
  * @author 龚建波
  * @date 2021-12-10
  * @history
- * 2021-12-29 修复播放游标的偏移问题
+ * 2021-12-29 修复播放游标的偏移问题，修复播放reset问题
  */
 class SimpleAudioDevice : public QIODevice
 {

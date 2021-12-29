@@ -26,10 +26,7 @@ AVDataOutput::AVDataOutput(AVDataSource *source, QObject *parent)
         //进度=已放时间和总时间之比*总字节数，注意时间单位
         qint64 cur_pos = outputOffset + (audioOutput->processedUSecs() / 1000.0) /
                 audioSource->getDuration() * audioSource->size();
-        if (cur_pos < 0) {
-            cur_pos = 0;
-        }
-        else if (cur_pos > outputCount) {
+        if (cur_pos > outputCount) {
             cur_pos = outputCount;
         }
         //减temp_offset是为了补偿缓冲区还未播放的时差，音画同步
@@ -38,7 +35,11 @@ AVDataOutput::AVDataOutput(AVDataSource *source, QObject *parent)
             temp_offset = 0;
         }
         //减一个采样做下标
-        setCurrentIndex(cur_pos - temp_offset - audioSource->getSampleSize() / 8);
+        cur_pos = cur_pos - temp_offset - audioSource->getSampleSize() / 8;
+        if (cur_pos < 0) {
+            cur_pos = 0;
+        }
+        setCurrentIndex(cur_pos);
     });
 }
 
@@ -52,10 +53,12 @@ qint64 AVDataOutput::readData(char *data, qint64 maxSize)
     if (!data || maxSize < 1)
         return 0;
     const std::vector<char> &audio_data = audioSource->getData();
+    //如果是选区播放，可以将截至位置减去播放位置
     const qint64 data_size = audioSource->size() - outputCount;
     if (data_size <= 0) {
-        //stateChanged没有触发停止，懒得判断notify了
-        QTimer::singleShot(1, [this] { playFinished(); });
+        //stateChanged没有触发停止，但return 0 会触发 IdleState 状态
+        //现在改为通过IdleState状态判断结束
+        //QTimer::singleShot(1, [this] { playFinished(); });
         return 0;
     }
 
@@ -195,7 +198,14 @@ bool AVDataOutput::startPlay(const QAudioDeviceInfo &device, const QAudioFormat 
         currentFormat = outputFormat;
         //QAudioFormat n_format=outputDevice.nearestFormat(outputFormat);
         audioOutput = new QAudioOutput(outputDevice, outputFormat, this);
-        connect(audioOutput, &QAudioOutput::stateChanged, this, &AVDataOutput::stateChanged);
+        connect(audioOutput, &QAudioOutput::stateChanged, this, [this](QAudio::State state)
+        {
+            emit stateChanged(state);
+            //没有音频数据可供处理时触发IdleState状态
+            if (state == QAudio::IdleState) {
+                emit playFinished();
+            }
+        });
         connect(audioOutput, &QAudioOutput::notify, this, &AVDataOutput::notify);
         //目前用notify来控制进度刷新
         audioOutput->setNotifyInterval(30);

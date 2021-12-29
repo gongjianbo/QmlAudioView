@@ -82,14 +82,17 @@ qint64 SimpleAudioRecorder::getDuration() const
 
 void SimpleAudioRecorder::updateDuration()
 {
-    //更新时长信息
+    //根据音频数据的参数和数据长度进行计算
     const int sample_rate = audioFormat.sampleRate();
-    //时长=采样总数/每秒的采样数
-    // s time*1000=ms time
-    qint64 duration = (audioData.size() / 2) / (1.0 * sample_rate) * 1000;
-
-    if (audioDuration != duration)
-    {
+    const int sample_byte = audioFormat.sampleSize() / 8;
+    const int channel_count = audioFormat.channelCount();
+    qint64 duration = 0;
+    if (audioData.size() > 0 && sample_rate > 0 && sample_byte > 0 && channel_count > 0) {
+        //时长=采样总数/每秒的采样数
+        //s time*1000=ms time
+        duration = (audioData.size() / sample_byte) / (1.0 * channel_count * sample_rate) * 1000;
+    }
+    if (audioDuration != duration) {
         audioDuration = duration;
         emit durationChanged();
     }
@@ -129,17 +132,20 @@ qint64 SimpleAudioRecorder::readData(char *data, qint64 maxSize)
 {
     if (!data || maxSize < 1)
         return 0;
+    //如果是选区播放，可以将截至位置减去播放位置
     const int data_size = audioData.count() - outputCount;
     if (data_size <= 0)
     {
-        // stateChanged没有触发停止，懒得判断notify了
+        //qDebug()<<__FUNCTION__<<"finish";
+        /// stateChanged没有触发停止，但return 0 会触发 IdleState 状态
+        /// 现在改为通过IdleState状态判断结束
         // 定时时间大于notifyInterval，使播放完整
-        const int sample_rate = audioFormat.sampleRate();
+        //const int sample_rate = audioFormat.sampleRate();
         // 时长=采样总数/每秒的采样数
         // s time*1000=ms time
-        qint64 duration = (audioOutput->bufferSize() / 2) / (1.0 * sample_rate) * 1000;
+        //qint64 duration = (audioOutput->bufferSize() / 2) / (1.0 * sample_rate) * 1000;
         // 这里播放结束时会进入多次，所以需要保存一个标志，使只定时一次
-        QTimer::singleShot(duration + 30, [this]{ stop(); });
+        //QTimer::singleShot(duration + 30, [this]{ stop(); });
         return 0;
     }
 
@@ -334,11 +340,15 @@ void SimpleAudioRecorder::stop()
         break;
     case Playing:
     case PlayPause:
-        audioOutput->stop();
+        if (audioOutput) {
+            audioOutput->stop();
+        }
         break;
     case Recording:
     case RecordPause:
-        audioInput->stop();
+        if (audioInput) {
+            audioInput->stop();
+        }
         break;
     default:
         break;
@@ -366,22 +376,32 @@ void SimpleAudioRecorder::play()
     {
         //使用默认的输出设备，即系统当前设置的默认设备
         audioOutput = new QAudioOutput(QAudioDeviceInfo::defaultOutputDevice(), audioFormat, this);
-        connect(audioOutput, &QAudioOutput::stateChanged, this, []() {});
+        connect(audioOutput, &QAudioOutput::stateChanged, this, [this](QAudio::State state)
+        {
+            //没有音频数据可供处理时触发IdleState状态
+            if (state == QAudio::IdleState) {
+                stop();
+            }
+        });
         connect(audioOutput, &QAudioOutput::notify, this, [this]()
         {
-            if(getDuration() > 0){
+            if (getDuration() > 0) {
                 //用processedUSecs获取start到当前的us数，但是start后有点延迟
                 //进度=已放时间和总时间之比*总字节数，注意时间单位
                 playCount = (audioOutput->processedUSecs() / 1000.0) /
                         audioDuration * audioData.count();
+                if (playCount > outputCount) {
+                    playCount = outputCount;
+                }
                 //减temp_offset是为了补偿缓冲区还未播放的时差，音画同步
                 int temp_offset = (audioOutput->bufferSize() - audioOutput->bytesFree());
                 if (temp_offset < 0) {
                     temp_offset = 0;
                 }
                 playCount -= temp_offset;
-                if(playCount > outputCount)
-                    playCount = outputCount;
+                if (playCount < 0) {
+                    playCount = 0;
+                }
                 updatePosition();
                 refresh();
             }
@@ -389,7 +409,8 @@ void SimpleAudioRecorder::play()
         //目前用notify来控制进度刷新
         audioOutput->setNotifyInterval(30);
     }
-    audioOutput->reset();
+    //之前写audioOutput->reset()，多次播放会遇到notify卡顿
+    audioDevice->reset();
     audioOutput->start(audioDevice);
     //切换为录制状态
     setWorkState(Playing);
@@ -435,7 +456,7 @@ void SimpleAudioRecorder::record()
         connect(audioInput, &QAudioInput::stateChanged, this, []() {});
         connect(audioInput, &QAudioInput::notify, this, []() {});
     }
-    audioInput->reset();
+    audioDevice->reset();
     audioInput->start(audioDevice);
     //切换为录制状态
     setWorkState(Recording);
