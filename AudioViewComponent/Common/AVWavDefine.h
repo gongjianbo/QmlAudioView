@@ -7,15 +7,27 @@
  * @author 龚建波
  * @date 2020-11-12
  * @details
- * wav头是不定长格式，不过这里用的比较简单的格式，便于处理
+ * wav格式头是不定长的，不过这里用的比较简单的固定格式，便于处理
  * 包含RIFF块、文件格式标志、fmt块、压缩编码时fact块、data块
  * （数值以小端存储，不过pc一般默认小端存储，暂不特殊处理）
  * 参照：https://www.cnblogs.com/ranson7zop/p/7657874.html
  * 参照：https://www.cnblogs.com/Ph-one/p/6839892.html
- * @note wav格式数据段大小为uint32，只支持到4GB
+ * 参照：http://mobile.soomal.com/doc/10100001099.htm
+ * @todo
+ * 划分为RIFF和RF64，以支持更长的数据内容
+ * @note
+ * 此处wav/wave指Microsoft Wave音频文件格式，后缀为".wav"
+ * wave长度变量为uint32四个字节，只支持到4GB（2^32）
+ * （网上有说只支持2G，用工具拼接实测是可以支持到接近4GB的）
+ * 对于更长的数据，可以使用Sony Wave64，后缀为".w64"；
+ * 或者使用RF64，RF64即RIFF的64bit版本。
+ * Adobe Audition软件保存wav时如果数据超过4GB，会使用RF64格式保存
  */
 #pragma pack(push,1)
 /// wav格式头的RIFF块
+/// RIFF即Resource Interchange File Format，中文意思为资源交换文件格式，
+/// 它是一种基础的文件格式，最初由Microsoft和IBM在1991年定义，
+/// 它约定了资源类型文件的基本结构，Microsoft的Wave和AVI文件都是基于RIFF机构的
 struct AVWavRiffChunk
 {
     char chunkId[4]; //文档标识，大写"RIFF"
