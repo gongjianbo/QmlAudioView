@@ -224,7 +224,8 @@ void SimpleAudioRecorder::paint(QPainter *painter)
                       painter->fontMetrics().height() / 2.5, "0");
     for (int i = 1; i <= 3; i++)
     {
-        y_px = i * view_height / 2 / 3;
+        //取反是因为Qt屏幕坐标系是左上角为0，右下角正方向
+        y_px = -i * view_height / 2 / 3;
         y_text = QString::number(i * 1200);
         painter->drawText(-5 - painter->fontMetrics().horizontalAdvance(y_text),
                           y_px + painter->fontMetrics().height() / 2.5,
@@ -280,6 +281,7 @@ void SimpleAudioRecorder::updateSamplePath()
         x_step = sample_count;
     //坐标轴轴适应
     const double x_scale = (width() - leftPadding - rightPadding) / (double)sample_count;
+    //取反是因为Qt屏幕坐标系是左上角为0，右下角正方向
     const double y_scale = -(height() - topPadding - bottomPadding) / (double)0x10000;
 
     short cur_max = 0;
