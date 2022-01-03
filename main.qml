@@ -28,7 +28,7 @@ Window {
             }
             ButtonGroup {
                 id: view_btn_group
-                buttons: [btn_audio_view, btn_simple_audio]
+                buttons: [btn_audio_view, btn_test_view, btn_simple_audio]
             }
             Row {
                 x: 10
@@ -41,7 +41,7 @@ Window {
                     MyButton {
                         id: btn_audio_view
                         checkable: true
-                        text: "[Audio View]"
+                        text: "[Audio View Demo]"
                         normalBgColor: "transparent"
                         radius: 0
                         onClicked: {
@@ -50,10 +50,21 @@ Window {
                     }
 
                     MyButton {
+                        id: btn_test_view
+                        checkable: true
+                        text: "[Simple View Test]"
+                        normalBgColor: "transparent"
+                        radius: 0
+                        onClicked: {
+                            root_loader.source = "qrc:/SimpleViewDemo.qml"
+                        }
+                    }
+
+                    MyButton {
                         id: btn_simple_audio
                         checkable: true
                         checked: true
-                        text: "[Simple Audio]"
+                        text: "[Simple Audio Demo]"
                         normalBgColor: "transparent"
                         radius: 0
                         onClicked: {

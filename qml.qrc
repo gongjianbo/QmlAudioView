@@ -4,5 +4,6 @@
         <file>SimpleAudioDemo.qml</file>
         <file>MyButton.qml</file>
         <file>AudioViewDemo.qml</file>
+        <file>SimpleViewDemo.qml</file>
     </qresource>
 </RCC>

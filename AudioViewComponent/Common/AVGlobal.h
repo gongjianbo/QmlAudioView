@@ -57,17 +57,33 @@ public:
     };
     Q_ENUM(WorkState)
 
-    /// 图层位置
+    /// 九宫格位置
+    /// view中的组件布局根据Position来确定位置，如series在PosCenter正中
+    /// z值大的绘制在上层
     enum Position : int
     {
-        PosNone      //无效状态
-        , PosTop     //view顶部
-        , PosRight   //view右侧
-        , PosBottom  //view底部
-        , PosLeft    //view左侧
-        , PosCenter  //view中间，一般指series区域
+        PosNone = 0x00          //无效状态
+        , PosLeft = 0x01        //横向左侧
+        , PosHCenter = 0x02     //横向中间
+        , PosRight = 0x04       //横向右侧
+        , PosTop = 0x10         //竖向顶部
+        , PosVCenter = 0x20     //竖向中间
+        , PosBottom = 0x40      //竖向底部
+        , PosTopLeft = 0x11     //左上角
+        , PosTopRight = 0x14    //右上角
+        , PosBottomLeft = 0x41  //左下角
+        , PosBottomRight = 0x44 //右下角
+        , PosCenter = 0x22      //正中间
     };
     Q_ENUM(Position)
+
+    /// 方向，对应坐标系xy轴
+    enum Direction : int
+    {
+        LeftToRight   //左到右
+        , TopToBottom  //上到下
+    };
+    Q_ENUM(Direction)
 
     /// 错误信息
     enum ErrorType : int

@@ -129,8 +129,7 @@ void AVSimpleView::paint(QPainter *painter)
     painter->setPen(Qt::red);
 
     const qint64 cur_index = dataOutput->getCurrentIndex();
-    if(sample_count > 0)
-        qDebug()<<OS_OBJECT(cur_index)<<OS_OBJECT(sample_count);
+    //if(sample_count > 0) qDebug()<<OS_OBJECT(cur_index)<<OS_OBJECT(sample_count);
     const int cur_pos = cur_index/2.0/sample_count*w ;
     painter->drawLine(cur_pos, 0, cur_pos, h);
 }
