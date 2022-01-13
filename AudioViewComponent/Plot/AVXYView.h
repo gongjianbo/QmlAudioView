@@ -14,6 +14,7 @@ class AVXYView : public QQuickPaintedItem
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
+    Q_PROPERTY(AVXYLayout* layout MEMBER layout CONSTANT)
 public:
     explicit AVXYView(QQuickItem *parent = nullptr);
 

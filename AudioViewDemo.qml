@@ -11,17 +11,25 @@ Rectangle {
         id: xy_view
         anchors.fill: parent
         anchors.margins: 20
+        layout{
+            leftPadding: 10
+            bottomPadding: 10
+            topPadding: 10
+            rightPadding: 10
+        }
 
         AVWrapper {
             position: AVGlobal.PosLeft
             direction: AVGlobal.LeftToRight
             spacing: 10
-            AVWrapper {
+            AVValueAxis {
                 implicitWidth: 30
+                position: AVGlobal.PosLeft
             }
-            AVWrapper {
+            AVValueAxis {
                 id: v1
                 implicitWidth: 50
+                position: AVGlobal.PosLeft
             }
         }
 
@@ -29,12 +37,14 @@ Rectangle {
             position: AVGlobal.PosRight
             direction: AVGlobal.LeftToRight
             spacing: 10
-            AVWrapper {
+            AVValueAxis {
                 implicitWidth: 20
+                position: AVGlobal.PosRight
             }
-            AVWrapper {
+            AVValueAxis {
                 id: v2
                 implicitWidth: 30
+                position: AVGlobal.PosRight
             }
         }
 
@@ -42,11 +52,13 @@ Rectangle {
             position: AVGlobal.PosTop
             direction: AVGlobal.TopToBottom
             spacing: 10
-            AVWrapper {
+            AVValueAxis {
                 implicitHeight: 30
+                position: AVGlobal.PosTop
             }
-            AVWrapper {
+            AVValueAxis {
                 implicitHeight: 50
+                position: AVGlobal.PosTop
             }
         }
 
@@ -54,13 +66,15 @@ Rectangle {
             position: AVGlobal.PosBottom
             direction: AVGlobal.TopToBottom
             spacing: 10
-            AVWrapper {
+            AVValueAxis {
                 id: v3
                 implicitHeight: 20
+                position: AVGlobal.PosBottom
             }
-            AVWrapper {
+            AVValueAxis {
                 id: v4
                 implicitHeight: 30
+                position: AVGlobal.PosBottom
             }
         }
     }
