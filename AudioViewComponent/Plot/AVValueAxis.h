@@ -178,36 +178,32 @@ public slots:
 private:
     // 刻度计算方式，默认根据参考px计算
     AVValueAxis::CalcMode calcMode{AVValueAxis::RefPixel};
-    //显示的小数位数
+    // 显示的小数位数
     int decimalPrecision{3};
-    //刻度根据固定值间隔时的参考
+    // 刻度根据固定值间隔时的参考
     double fixedValueSpace{100.0};
-    //刻度根据像素间隔的参考
-    //通过参考像素间隔计算得到值间隔，再取整后转换为像素间隔
+    // 刻度根据像素间隔的参考
+    // 通过参考像素间隔计算得到值间隔，再取整后转换为像素间隔
     double refPixelSpace{35.0};
 
-    //刻度值限定范围
+    // 刻度值限定范围
     double minLimit{0.0};
     double maxLimit{1000.0};
-    //最小缩放范围
+    // 最小缩放范围
     double minRange{10.0};
-    //当前显示范围
+    // 当前显示范围
     double minValue{0.0};
     double maxValue{1000.0};
 
-    //1像素表示的值
+    // 1像素表示的值
     double unit1PxToValue{1.0};
-    //1单位值表示的像素
+    // 1单位值表示的像素
     double unit1ValueToPx{1.0};
-    //刻度绘制像素起点
-    //横向以左侧开始，竖向以底部开始
+    // 刻度绘制像素起点
+    // 横向以左侧开始，竖向以底部开始
     double pxStart{0.0};
-    //刻度像素间隔
+    // 刻度像素间隔
     double pxSpace{30.0};
-    //刻度值间隔
+    // 刻度值间隔
     double valueSpace{1.0};
-    //刻度像素位置
-    QVector<int> tickPos;
-    //刻度值文本
-    QVector<QString> tickLabel;
 };

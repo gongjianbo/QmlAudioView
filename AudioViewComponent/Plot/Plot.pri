@@ -5,6 +5,7 @@ HEADERS += \
     $$PWD/AVSimpleView.h \
     $$PWD/AVValueAxis.h \
     $$PWD/AVWrapper.h \
+    $$PWD/AVXYGrid.h \
     $$PWD/AVXYLayout.h \
     $$PWD/AVXYView.h
 
@@ -15,5 +16,6 @@ SOURCES += \
     $$PWD/AVSimpleView.cpp \
     $$PWD/AVValueAxis.cpp \
     $$PWD/AVWrapper.cpp \
+    $$PWD/AVXYGrid.cpp \
     $$PWD/AVXYLayout.cpp \
     $$PWD/AVXYView.cpp

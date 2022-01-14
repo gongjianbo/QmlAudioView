@@ -13,6 +13,14 @@ class AVAbstractAxis : public AVAbstractLayer
 public:
     explicit AVAbstractAxis(QObject *parent = nullptr);
 
-signals:
+    // 刻度位置
+    QVector<int> getTickPos() const;
+    // 刻度信息
+    QVector<QString> getTickLabel() const;
 
+protected:
+    // 刻度像素位置
+    QVector<int> tickPos;
+    // 刻度值文本
+    QVector<QString> tickLabel;
 };

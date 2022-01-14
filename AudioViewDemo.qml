@@ -9,8 +9,11 @@ Rectangle {
 
     AVXYView {
         id: xy_view
-        anchors.fill: parent
-        anchors.margins: 20
+        anchors{
+            fill: parent
+            margins: 20
+            bottomMargin: 70
+        }
         layout{
             leftPadding: 10
             bottomPadding: 10
@@ -33,6 +36,7 @@ Rectangle {
                 bgColor: "#333333"
             }
             AVValueAxis {
+                id: y_axis
                 implicitWidth: 60
                 position: AVGlobal.PosLeft
                 refPixelSpace: 80
@@ -79,6 +83,7 @@ Rectangle {
             direction: AVGlobal.TopToBottom
             spacing: 10
             AVValueAxis {
+                id: x_axis
                 implicitHeight: 30
                 position: AVGlobal.PosBottom
                 refPixelSpace: 100
@@ -91,15 +96,28 @@ Rectangle {
                 bgColor: "#333333"
             }
         }
+
+        AVXYGrid {
+            bgColor: "#112233"
+            xAxis: x_axis
+            yAxis: y_axis
+        }
     }
 
-    MouseArea {
-        anchors.fill: parent
-        onClicked: {
-            v1.visibility = !v1.visibility;
-            v2.visibility = !v2.visibility;
-            v3.visibility = !v3.visibility;
-            v4.visibility = !v4.visibility;
+    Row {
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.margins: 20
+        spacing: 12
+
+        MyButton {
+            text: "Axis显示隐藏"
+            onClicked: {
+                v1.visibility = !v1.visibility;
+                v2.visibility = !v2.visibility;
+                v3.visibility = !v3.visibility;
+                v4.visibility = !v4.visibility;
+            }
         }
     }
 }
