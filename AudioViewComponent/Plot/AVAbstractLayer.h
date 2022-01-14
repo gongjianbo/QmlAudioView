@@ -35,6 +35,14 @@ class AVAbstractLayer : public QObject, public QQmlParserStatus
     Q_PROPERTY(bool visibility READ getVisibility WRITE setVisibility NOTIFY visibilityChanged)
     /// 当前是否可见，根据图表中的操作改变
     Q_PROPERTY(bool visible READ getVisible NOTIFY visibleChanged)
+    /// 字体
+    Q_PROPERTY(QFont font READ getFont WRITE setFont NOTIFY fontChanged)
+    /// 背景色
+    Q_PROPERTY(QColor bgColor READ getBgColor WRITE setBgColor NOTIFY bgColorChanged)
+    /// 文本色
+    Q_PROPERTY(QColor textColor READ getTextColor WRITE setTextColor NOTIFY textColorChanged)
+    /// 线条颜色
+    Q_PROPERTY(QColor lineColor READ getLineColor WRITE setLineColor NOTIFY lineColorChanged)
     /// 默认属性，子节点
     Q_CLASSINFO("DefaultProperty", "children")
 public:
@@ -66,6 +74,19 @@ public:
 
     bool getVisible() const;
     void setVisible(bool enable);
+
+    QFont getFont() const;
+    void setFont(const QFont ft);
+    bool getFontEnable() const;
+
+    QColor getBgColor() const;
+    void setBgColor(const QColor &color);
+
+    QColor getTextColor() const;
+    void setTextColor(const QColor &color);
+
+    QColor getLineColor() const;
+    void setLineColor(const QColor &color);
 
     // 操作，return=true表示事件被接收，不再继续传递
     virtual bool mousePress(const QPoint &pos, Qt::KeyboardModifiers keymod);
@@ -104,6 +125,10 @@ signals:
     void acceptEventChanged();
     void visibilityChanged();
     void visibleChanged();
+    void fontChanged();
+    void bgColorChanged();
+    void textColorChanged();
+    void lineColorChanged();
 
 protected:
     // 子节点
@@ -124,4 +149,14 @@ protected:
     // 默认可见
     bool visibility{true};
     bool visible{true};
+    // 字体
+    QFont font;
+    // layer的字体默认不启用，设置前先判断
+    bool fontEnable{false};
+    // 背景色
+    QColor bgColor{QColor(0, 0, 0)};
+    // 文本色
+    QColor textColor{QColor(255, 255, 255)};
+    // 线条颜色
+    QColor lineColor{QColor(255, 255, 255)};
 };

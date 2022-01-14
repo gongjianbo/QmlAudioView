@@ -1,6 +1,7 @@
 #pragma once
 #include <QQuickPaintedItem>
 #include <QEvent>
+#include <QFont>
 #include "Common/AVGlobal.h"
 #include "AVAbstractLayer.h"
 #include "AVXYLayout.h"
@@ -14,9 +15,22 @@ class AVXYView : public QQuickPaintedItem
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
-    Q_PROPERTY(AVXYLayout* layout MEMBER layout CONSTANT)
+    Q_PROPERTY(AVXYLayout* layout READ getLayout CONSTANT)
+    Q_PROPERTY(QFont font READ getFont WRITE setFont NOTIFY fontChanged)
+    Q_PROPERTY(QColor bgColor READ getBgColor WRITE setBgColor NOTIFY bgColorChanged)
 public:
     explicit AVXYView(QQuickItem *parent = nullptr);
+
+    // 布局
+    AVXYLayout *getLayout();
+
+    // 字体
+    QFont getFont() const;
+    void setFont(const QFont ft);
+
+    // 背景颜色 background color
+    QColor getBgColor() const;
+    void setBgColor(const QColor &color);
 
     // 绘制
     void paint(QPainter *painter) override;
@@ -27,6 +41,8 @@ protected:
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
 
 signals:
+    void fontChanged();
+    void bgColorChanged();
 
 public slots:
     // 刷新
@@ -37,6 +53,10 @@ private:
     AVXYLayout *layout;
     // layer节点，根据z值排序表，z值大的后绘制使之在表层
     QList<AVAbstractLayer*> layers;
+    // 字体
+    QFont font;
+    // 背景色
+    QColor bgColor{QColor(0, 0, 0)};
 };
 
 

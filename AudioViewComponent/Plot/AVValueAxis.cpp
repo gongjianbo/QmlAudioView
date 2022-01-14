@@ -170,8 +170,7 @@ double AVValueAxis::valueToPx(double value) const
 
 void AVValueAxis::draw(QPainter *painter)
 {
-    painter->setPen(Qt::white);
-    painter->fillRect(rect, QColor(0, 255, 0, 100));
+    painter->fillRect(rect, bgColor);
     switch (this->getPosition())
     {
     case AVGlobal::PosLeft:
@@ -199,45 +198,52 @@ void AVValueAxis::geometryChanged(const QRect &newRect)
 
 void AVValueAxis::drawLeft(QPainter *painter)
 {
-    painter->save();
     const int right_pos = getRect().right();
     for (int i = 0; i < tickPos.count(); i++)
     {
         const int y_pos = tickPos.at(i);
+        painter->setPen(lineColor);
         painter->drawLine(QPoint(right_pos, y_pos),
                           QPoint(right_pos - 5, y_pos));
+        painter->setPen(textColor);
         painter->drawText(right_pos - 5 - painter->fontMetrics().horizontalAdvance(tickLabel.at(i)),
                           y_pos + painter->fontMetrics().ascent() / 2,
                           tickLabel.at(i));
     }
-
-    painter->restore();
+    painter->setPen(lineColor);
+    painter->drawLine(getRect().topRight(), getRect().bottomRight());
 }
 
 void AVValueAxis::drawRight(QPainter *painter)
 {
-
+    //todo 待实现，目前无需求
+    painter->setPen(lineColor);
+    painter->drawLine(getRect().topLeft(), getRect().bottomLeft());
 }
 
 void AVValueAxis::drawTop(QPainter *painter)
 {
-
+    //todo 待实现，目前无需求
+    painter->setPen(lineColor);
+    painter->drawLine(getRect().bottomLeft(), getRect().bottomRight());
 }
 
 void AVValueAxis::drawBottom(QPainter *painter)
 {
-    painter->save();
     const int top_pos = getRect().top();
     for (int i = 0; i < tickPos.count(); i++)
     {
         const int x_pos = tickPos.at(i);
+        painter->setPen(lineColor);
         painter->drawLine(QPoint(x_pos, top_pos),
                           QPoint(x_pos, top_pos + 5));
+        painter->setPen(textColor);
         painter->drawText(x_pos - painter->fontMetrics().horizontalAdvance(tickLabel.at(i)) / 2,
                           top_pos + 5 + painter->fontMetrics().height(),
                           tickLabel.at(i));
     }
-    painter->restore();
+    painter->setPen(lineColor);
+    painter->drawLine(getRect().topLeft(), getRect().topRight());
 }
 
 void AVValueAxis::calcAxis()

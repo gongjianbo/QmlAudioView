@@ -125,6 +125,66 @@ void AVAbstractLayer::setVisible(bool enable)
     }
 }
 
+QFont AVAbstractLayer::getFont() const
+{
+    return font;
+}
+
+void AVAbstractLayer::setFont(const QFont ft)
+{
+    font = ft;
+    fontEnable = true;
+    emit fontChanged();
+    emit layerChanged();
+}
+
+bool AVAbstractLayer::getFontEnable() const
+{
+    return fontEnable;
+}
+
+QColor AVAbstractLayer::getBgColor() const
+{
+    return bgColor;
+}
+
+void AVAbstractLayer::setBgColor(const QColor &color)
+{
+    if (bgColor != color) {
+        bgColor = color;
+        emit bgColorChanged();
+        emit layerChanged();
+    }
+}
+
+QColor AVAbstractLayer::getTextColor() const
+{
+    return textColor;
+}
+
+void AVAbstractLayer::setTextColor(const QColor &color)
+{
+    if (textColor != color) {
+        textColor = color;
+        emit textColorChanged();
+        emit layerChanged();
+    }
+}
+
+QColor AVAbstractLayer::getLineColor() const
+{
+    return lineColor;
+}
+
+void AVAbstractLayer::setLineColor(const QColor &color)
+{
+    if (lineColor != color) {
+        lineColor = color;
+        emit lineColorChanged();
+        emit layerChanged();
+    }
+}
+
 bool AVAbstractLayer::mousePress(const QPoint &, Qt::KeyboardModifiers)
 {
     return false;

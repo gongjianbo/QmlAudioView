@@ -17,19 +17,26 @@ Rectangle {
             topPadding: 10
             rightPadding: 10
         }
+        font{
+            family: "SimSun"
+            pixelSize: 12
+        }
 
         AVWrapper {
             position: AVGlobal.PosLeft
             direction: AVGlobal.LeftToRight
             spacing: 10
             AVValueAxis {
-                implicitWidth: 30
-                position: AVGlobal.PosLeft
-            }
-            AVValueAxis {
                 id: v1
                 implicitWidth: 50
                 position: AVGlobal.PosLeft
+                bgColor: "#333333"
+            }
+            AVValueAxis {
+                implicitWidth: 60
+                position: AVGlobal.PosLeft
+                refPixelSpace: 80
+                bgColor: "#222222"
             }
         }
 
@@ -40,11 +47,13 @@ Rectangle {
             AVValueAxis {
                 implicitWidth: 20
                 position: AVGlobal.PosRight
+                bgColor: "#222222"
             }
             AVValueAxis {
                 id: v2
                 implicitWidth: 30
                 position: AVGlobal.PosRight
+                bgColor: "#333333"
             }
         }
 
@@ -53,12 +62,15 @@ Rectangle {
             direction: AVGlobal.TopToBottom
             spacing: 10
             AVValueAxis {
-                implicitHeight: 30
-                position: AVGlobal.PosTop
-            }
-            AVValueAxis {
+                id: v3
                 implicitHeight: 50
                 position: AVGlobal.PosTop
+                bgColor: "#333333"
+            }
+            AVValueAxis {
+                implicitHeight: 30
+                position: AVGlobal.PosTop
+                bgColor: "#222222"
             }
         }
 
@@ -67,14 +79,16 @@ Rectangle {
             direction: AVGlobal.TopToBottom
             spacing: 10
             AVValueAxis {
-                id: v3
-                implicitHeight: 20
+                implicitHeight: 30
                 position: AVGlobal.PosBottom
+                refPixelSpace: 100
+                bgColor: "#222222"
             }
             AVValueAxis {
                 id: v4
                 implicitHeight: 30
                 position: AVGlobal.PosBottom
+                bgColor: "#333333"
             }
         }
     }

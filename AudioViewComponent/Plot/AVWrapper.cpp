@@ -106,7 +106,7 @@ int AVWrapper::contentWidth() const
 void AVWrapper::draw(QPainter *painter)
 {
     //qDebug()<<rect;
-    painter->fillRect(rect, QColor(255, 255, 255, 50));
+    //painter->fillRect(rect, QColor(255, 255, 255, 50));
     for (AVAbstractLayer *layer : layers) {
         if (layer->getVisible()) layer->draw(painter);
     }

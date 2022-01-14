@@ -1,4 +1,5 @@
 import QtQuick 2.12
+import QtQml 2.12
 import QtQuick.Window 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Layouts 1.12
@@ -63,7 +64,6 @@ Window {
                     MyButton {
                         id: btn_simple_audio
                         checkable: true
-                        checked: true
                         text: "[Simple Audio Demo]"
                         normalBgColor: "transparent"
                         radius: 0
@@ -96,7 +96,7 @@ Window {
             Loader {
                 id: root_loader
                 anchors.fill: parent
-                source: "qrc:/SimpleAudioDemo.qml"
+                //source: "qrc:/AudioViewDemo.qml"
             }
         }
         Rectangle {
@@ -106,5 +106,10 @@ Window {
             z: 2
             color: "#555555"
         }
+    }
+
+    Component.onCompleted: {
+        view_btn_group.buttons[0].checked = true;
+        view_btn_group.checkedButton.clicked();
     }
 }
