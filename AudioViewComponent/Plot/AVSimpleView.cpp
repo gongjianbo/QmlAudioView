@@ -20,14 +20,16 @@ AVSimpleView::AVSimpleView(QQuickItem *parent)
     });
 
     //输入
-    dataInput = new AVDataInput(dataSource, this);
+    dataInput = new AVDataInput(this);
+    dataInput->setAudioSource(dataSource);
     connect(dataInput, &AVDataInput::durationChanged, this, [this](){
         emit durationChanged();
         update();
     });
 
     //输出
-    dataOutput = new AVDataOutput(dataSource, this);
+    dataOutput = new AVDataOutput(this);
+    dataOutput->setAudioSource(dataSource);
     connect(dataOutput, &AVDataOutput::positionChanged, this, [this](){
         emit positionChanged();
         update();

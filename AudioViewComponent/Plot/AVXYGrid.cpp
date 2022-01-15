@@ -1,39 +1,11 @@
 #include "AVXYGrid.h"
 
 AVXYGrid::AVXYGrid(QObject *parent)
-    : AVAbstractLayer(parent)
+    : AVAbstractSeries(parent)
 {
-    position = AVGlobal::PosCenter;
     z = -1;
+    position = AVGlobal::PosCenter;
     lineColor = QColor(120, 120, 120);
-}
-
-AVAbstractAxis *AVXYGrid::getXAxis()
-{
-    return xAxis;
-}
-
-void AVXYGrid::setXAxis(AVAbstractAxis *axis)
-{
-    if (xAxis != axis) {
-        xAxis = axis;
-        emit xAxisChanged();
-        emit layerChanged();
-    }
-}
-
-AVAbstractAxis *AVXYGrid::getYAxis()
-{
-    return yAxis;
-}
-
-void AVXYGrid::setYAxis(AVAbstractAxis *axis)
-{
-    if (yAxis != axis) {
-        yAxis = axis;
-        emit yAxisChanged();
-        emit layerChanged();
-    }
 }
 
 void AVXYGrid::draw(QPainter *painter)

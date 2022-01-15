@@ -7,40 +7,12 @@
 #include <QTimer>
 #include <QDebug>
 
-AVDataOutput::AVDataOutput(AVDataSource *source, QObject *parent)
+AVDataOutput::AVDataOutput(QObject *parent)
     : QObject(parent)
-    , audioSource(source)
 {
     //作为QAudioInput/Output的start启动参数，处理时回调read/write接口
     audioBuffer = new AVDataBuffer(this, this);
     audioBuffer->open(QIODevice::ReadOnly);
-
-    connect(this, &AVDataOutput::notify, this, [this]{
-        if (!audioOutput || !audioSource)
-            return;
-        if (audioSource->isEmpty()) {
-            zeroCurrentIndex();
-            return;
-        }
-        //用processedUSecs获取start到当前的us数，但是start后有点延迟
-        //进度=已放时间和总时间之比*总字节数，注意时间单位
-        qint64 cur_pos = outputOffset + (audioOutput->processedUSecs() / 1000.0) /
-                audioSource->getDuration() * audioSource->size();
-        if (cur_pos > outputCount) {
-            cur_pos = outputCount;
-        }
-        //减temp_offset是为了补偿缓冲区还未播放的时差，音画同步
-        int temp_offset = (audioOutput->bufferSize() - audioOutput->bytesFree());
-        if (temp_offset < 0) {
-            temp_offset = 0;
-        }
-        //减一个采样做下标
-        cur_pos = cur_pos - temp_offset - audioSource->getSampleSize() / 8;
-        if (cur_pos < 0) {
-            cur_pos = 0;
-        }
-        setCurrentIndex(cur_pos);
-    });
 }
 
 AVDataOutput::~AVDataOutput()
@@ -50,6 +22,7 @@ AVDataOutput::~AVDataOutput()
 
 qint64 AVDataOutput::readData(char *data, qint64 maxSize)
 {
+    //此处不判断Source，在start时判断
     if (!data || maxSize < 1)
         return 0;
     const std::vector<char> &audio_data = audioSource->getData();
@@ -67,6 +40,20 @@ qint64 AVDataOutput::readData(char *data, qint64 maxSize)
     outputCount += read_size;
     //refresh(); 这个间隔回调太大了，不适合用来刷新播放进度
     return read_size;
+}
+
+AVDataSource *AVDataOutput::getAudioSource()
+{
+    return audioSource;
+}
+
+void AVDataOutput::setAudioSource(AVDataSource *source)
+{
+    if (audioSource == source) {
+        return;
+    }
+    audioSource = source;
+    emit audioSourceChanged();
 }
 
 qint64 AVDataOutput::getPosition() const
@@ -89,6 +76,9 @@ qint64 AVDataOutput::getCurrentIndex() const
 
 void AVDataOutput::setCurrentIndex(qint64 index)
 {
+    if (!audioSource) {
+        return;
+    }
     const QAudioFormat format = audioSource->getFormat();
     const qint64 sample_byte = format.sampleSize() / 8;
     //data size为0时index=负数，下一步会重置为index=0
@@ -135,6 +125,7 @@ void AVDataOutput::setStartIndex(qint64 index)
 
 /*void AVDataOutput::setCurrentOffset(qint64 offset)
 {
+   audioSource 先判断再使用
    const QAudioFormat format = audioSource->getFormat();
     if (offset > 0 && format.sampleSize() > 0) {
         audioBuffer->reset();
@@ -168,16 +159,19 @@ QAudio::State AVDataOutput::getState() const
 
 bool AVDataOutput::startPlay(const QAudioDeviceInfo &device, const QAudioFormat &format)
 {
-    qDebug() << "play" << device.deviceName() << format;
+    qDebug() << __FUNCTION__ << device.deviceName() << format;
     endPlay();
 
     outputDevice = device;
     outputFormat = format;
     //无效的参数
-    if (!outputFormat.isValid() || outputDevice.isNull() || audioSource->isEmpty()) {
-        qDebug() << "play failed,sample rate:" << outputFormat.sampleRate()
+    if (!audioSource || !outputFormat.isValid() || outputDevice.isNull() || audioSource->isEmpty()) {
+        qDebug() << __FUNCTION__ << "failed, sample rate:" << outputFormat.sampleRate()
                  << "device null:" << outputDevice.isNull() << outputDevice.supportedSampleRates();
-        if (!outputFormat.isValid()) {
+        if (!audioSource) {
+            emit errorChanged(AVGlobal::OutputSourceError);
+        }
+        else if (!outputFormat.isValid()) {
             emit errorChanged(AVGlobal::OutputFormatError);
         }
         else if (outputDevice.isNull()) {
@@ -206,7 +200,7 @@ bool AVDataOutput::startPlay(const QAudioDeviceInfo &device, const QAudioFormat 
                 emit playFinished();
             }
         });
-        connect(audioOutput, &QAudioOutput::notify, this, &AVDataOutput::notify);
+        connect(audioOutput, &QAudioOutput::notify, this, &AVDataOutput::onNotify);
         //目前用notify来控制进度刷新
         audioOutput->setNotifyInterval(30);
         //缓冲区
@@ -242,7 +236,7 @@ void AVDataOutput::endPlay()
     }
     //如果当前位置已在结尾，则回到播放起始位置重新播放
     //todo判断选区
-    if (outputCount >= audioSource->size()) {
+    if (audioSource && outputCount >= audioSource->size()) {
         outputCount = 0;
         //outputOffset = 0;
         setStartIndex(0);
@@ -274,6 +268,34 @@ void AVDataOutput::freePlay()
         audioOutput->deleteLater();
         audioOutput = nullptr;
     }
+}
+
+void AVDataOutput::onNotify()
+{
+    if (!audioOutput || !audioSource)
+        return;
+    if (audioSource->isEmpty()) {
+        zeroCurrentIndex();
+        return;
+    }
+    //用processedUSecs获取start到当前的us数，但是start后有点延迟
+    //进度=已放时间和总时间之比*总字节数，注意时间单位
+    qint64 cur_pos = outputOffset + (audioOutput->processedUSecs() / 1000.0) /
+            audioSource->getDuration() * audioSource->size();
+    if (cur_pos > outputCount) {
+        cur_pos = outputCount;
+    }
+    //减temp_offset是为了补偿缓冲区还未播放的时差，音画同步
+    int temp_offset = (audioOutput->bufferSize() - audioOutput->bytesFree());
+    if (temp_offset < 0) {
+        temp_offset = 0;
+    }
+    //减一个采样做下标
+    cur_pos = cur_pos - temp_offset - audioSource->getSampleSize() / 8;
+    if (cur_pos < 0) {
+        cur_pos = 0;
+    }
+    setCurrentIndex(cur_pos);
 }
 
 /*bool AVDataOutput::saveToFile(const QByteArray data, const QAudioFormat &format, const QString &filepath)

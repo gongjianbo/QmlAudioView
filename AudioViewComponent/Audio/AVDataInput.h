@@ -10,18 +10,27 @@
  * @brief 音频输入，录制或者读文件
  * @author 龚建波
  * @date 2021-1-13
+ * @history
+ * 2022-01-15 构造去掉AVDataSource参数，并在使用前判断是否为空指针
+ *            使之可以在QML中创建，并自由组合
  */
 class AVDataInput : public QObject, public AVCallback
 {
     Q_OBJECT
+    /// 数据存放
+    Q_PROPERTY(AVDataSource* audioSource READ getAudioSource WRITE setAudioSource NOTIFY audioSourceChanged)
     /// 音频时长 ms
     Q_PROPERTY(qint64 duration READ getDuration NOTIFY durationChanged)
 public:
-    explicit AVDataInput(AVDataSource *source, QObject *parent = nullptr);
+    explicit AVDataInput(QObject *parent = nullptr);
     ~AVDataInput();
 
     /// 录音or读文件
     qint64 writeData(const char *data, qint64 maxSize) override;
+
+    /// 数据存放
+    AVDataSource *getAudioSource();
+    void setAudioSource(AVDataSource *source);
 
     /// 音频数据时长
     qint64 getDuration() const;
@@ -60,8 +69,12 @@ public:
 signals:
     void errorChanged(AVGlobal::ErrorType error);
     void stateChanged(QAudio::State state);
-    void notify();
+    void audioSourceChanged();
     void durationChanged(qint64 duration);
+
+private slots:
+    /// QAudioInput::notify
+    void onNotify();
 
 private:
     /// QAudioInput/Output处理数据时回调IODevice的接口

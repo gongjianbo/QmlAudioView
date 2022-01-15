@@ -7,6 +7,7 @@ import AudioView 1.0
 Rectangle {
     id: control
 
+    //【】可视部件全部放到view中进行绘制
     AVXYView {
         id: xy_view
         anchors{
@@ -33,7 +34,12 @@ Rectangle {
                 id: v1
                 implicitWidth: 50
                 position: AVGlobal.PosLeft
+                refPixelSpace: 40
                 bgColor: "#333333"
+                minLimit: -32768
+                maxLimit: 32767
+                minValue: -32768
+                maxValue: 32767
             }
             AVValueAxis {
                 id: y_axis
@@ -41,6 +47,10 @@ Rectangle {
                 position: AVGlobal.PosLeft
                 refPixelSpace: 80
                 bgColor: "#222222"
+                minLimit: -32768
+                maxLimit: 32767
+                minValue: -32768
+                maxValue: 32767
             }
         }
 
@@ -102,8 +112,21 @@ Rectangle {
             xAxis: x_axis
             yAxis: y_axis
         }
+
+        AVAudioSeries {
+            lineColor: "#00FF11"
+            xAxis: x_axis
+            yAxis: y_axis
+            audioSource: audio_context.audioSource
+        }
     }
 
+    //【】非可视部件也可以放到外面
+    AVAudioContext {
+        id: audio_context
+    }
+
+    //【】底部按钮
     Row {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
@@ -117,6 +140,20 @@ Rectangle {
                 v2.visibility = !v2.visibility;
                 v3.visibility = !v3.visibility;
                 v4.visibility = !v4.visibility;
+            }
+        }
+
+        MyButton {
+            text: "录制"
+            onClicked: {
+                audio_context.record()
+            }
+        }
+
+        MyButton {
+            text: "停止"
+            onClicked: {
+                audio_context.stop()
             }
         }
     }

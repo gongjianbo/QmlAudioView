@@ -60,29 +60,29 @@ public:
     void setRefPixelSpace(int pixel);
 
     // 最小值限制
-    double getMinLimit() const;
-    void setMinLimit(double limit);
+    double getMinLimit() const override;
+    void setMinLimit(double limit) override;
     // change接口只触发changed信号，不触发计算
     void changeMinLimit(double limit);
 
     // 最大值限制
-    double getMaxLimit() const;
-    void setMaxLimit(double limit);
+    double getMaxLimit() const override;
+    void setMaxLimit(double limit) override;
     void changeMaxLimit(double limit);
 
     // 最小范围限制
-    double getMinRange() const;
-    void setMinRange(double limit);
+    double getMinRange() const override;
+    void setMinRange(double limit) override;
     void changeMinRange(double limit);
 
     // 当前显示的最小刻度
-    double getMinValue() const;
-    void setMinValue(double value);
+    double getMinValue() const override;
+    void setMinValue(double value) override;
     void changeMinValue(double value);
 
     // 当前显示的最大刻度
-    double getMaxValue() const;
-    void setMaxValue(double value);
+    double getMaxValue() const override;
+    void setMaxValue(double value) override;
     void changeMaxValue(double value);
 
     // 像素与值的换算
@@ -98,7 +98,7 @@ public:
     * 竖向时可能参数先被bottom+1减一下
     * @return 对应的刻度数值
     */
-    double pxToValue(double px) const;
+    double pxToValue(double px) const override;
 
     /**
     * @brief 数值转坐标轴像素值
@@ -109,7 +109,7 @@ public:
     * 该函数只负责计算距离，横向时可能要拿得到的px加上left,
     * 竖向时可能需要拿bottom+1来减去得到的px.
     */
-    double valueToPx(double value) const;
+    double valueToPx(double value) const override;
 
     // 绘制
     void draw(QPainter *painter) override;

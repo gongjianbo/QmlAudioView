@@ -2,6 +2,7 @@ HEADERS += \
     $$PWD/AVAbstractAxis.h \
     $$PWD/AVAbstractLayer.h \
     $$PWD/AVAbstractSeries.h \
+    $$PWD/AVAudioSeries.h \
     $$PWD/AVSimpleView.h \
     $$PWD/AVValueAxis.h \
     $$PWD/AVWrapper.h \
@@ -13,6 +14,7 @@ SOURCES += \
     $$PWD/AVAbstractAxis.cpp \
     $$PWD/AVAbstractLayer.cpp \
     $$PWD/AVAbstractSeries.cpp \
+    $$PWD/AVAudioSeries.cpp \
     $$PWD/AVSimpleView.cpp \
     $$PWD/AVValueAxis.cpp \
     $$PWD/AVWrapper.cpp \

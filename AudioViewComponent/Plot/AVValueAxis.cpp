@@ -203,10 +203,12 @@ void AVValueAxis::drawLeft(QPainter *painter)
     {
         const int y_pos = tickPos.at(i);
         painter->setPen(lineColor);
+        //刻度线5px
         painter->drawLine(QPoint(right_pos, y_pos),
                           QPoint(right_pos - 5, y_pos));
         painter->setPen(textColor);
-        painter->drawText(right_pos - 5 - painter->fontMetrics().horizontalAdvance(tickLabel.at(i)),
+        //离刻度线2px
+        painter->drawText(right_pos - 7 - painter->fontMetrics().horizontalAdvance(tickLabel.at(i)),
                           y_pos + painter->fontMetrics().ascent() / 2,
                           tickLabel.at(i));
     }
@@ -235,11 +237,13 @@ void AVValueAxis::drawBottom(QPainter *painter)
     {
         const int x_pos = tickPos.at(i);
         painter->setPen(lineColor);
+        //刻度线5px
         painter->drawLine(QPoint(x_pos, top_pos),
                           QPoint(x_pos, top_pos + 5));
         painter->setPen(textColor);
+        //离刻度线1px，加上文字本身也不会占满height
         painter->drawText(x_pos - painter->fontMetrics().horizontalAdvance(tickLabel.at(i)) / 2,
-                          top_pos + 5 + painter->fontMetrics().height(),
+                          top_pos + 6 + painter->fontMetrics().height(),
                           tickLabel.at(i));
     }
     painter->setPen(lineColor);
@@ -248,8 +252,15 @@ void AVValueAxis::drawBottom(QPainter *painter)
 
 void AVValueAxis::calcAxis()
 {
-    if (minLimit >= maxLimit || getRect().isNull())
+    if (minLimit >= maxLimit || getRect().isNull()) {
+        //qDebug() << __FUNCTION__ << "error" << bool(minLimit >= maxLimit) << getRect();
+        if (!tickPos.isEmpty() || !tickLabel.isEmpty()) {
+            tickPos.clear();
+            tickLabel.clear();
+            emit layerChanged();
+        }
         return;
+    }
     if (minValue > maxValue) {
         std::swap(minValue, maxValue);
     }
@@ -284,6 +295,12 @@ void AVValueAxis::calcAxis()
             }
             tickLabel.push_back(label_text);
         }
+        if (tickPos.isEmpty() && tickLabel.isEmpty()) {
+            tickPos.push_back(getRect().bottom());
+            tickPos.push_back(getRect().top());
+            tickLabel.push_back("0");
+            tickLabel.push_back("0");
+        }
     }
         break;
     case AVGlobal::PosTop:
@@ -308,6 +325,12 @@ void AVValueAxis::calcAxis()
                 label_text = "0";
             }
             tickLabel.push_back(label_text);
+        }
+        if (tickPos.isEmpty() && tickLabel.isEmpty()) {
+            tickPos.push_back(getRect().left());
+            tickPos.push_back(getRect().right());
+            tickLabel.push_back("0");
+            tickLabel.push_back("0");
         }
     }
         break;

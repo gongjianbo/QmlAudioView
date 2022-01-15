@@ -27,7 +27,7 @@ void AVDataSource::setFormat(const QAudioFormat &format)
 {
     if (audioFormat != format) {
         audioFormat = format;
-        qDebug()<<__FUNCTION__<<format;
+        qDebug() << __FUNCTION__ << format;
         calcDuration();
         emit formatChanged();
     }
@@ -111,7 +111,7 @@ const std::vector<char> &AVDataSource::getData() const
 void AVDataSource::setData(const std::vector<char> &data)
 {
     if (data.size() >= audioData.max_size()) {
-        qDebug()<<__FUNCTION__<<"data size out of range";
+        qDebug() << __FUNCTION__ << "data size out of range";
         audioData.clear();
     }
     else {
@@ -125,7 +125,7 @@ void AVDataSource::setData(const std::vector<char> &data)
 void AVDataSource::appendData(const std::vector<char> &data)
 {
     if (audioData.size() + data.size() >= audioData.max_size()) {
-        qDebug()<<__FUNCTION__<<"data size out of range";
+        qDebug() << __FUNCTION__ << "data size out of range";
         return;
     }
     audioData.insert(audioData.end(), data.cbegin(), data.cend());

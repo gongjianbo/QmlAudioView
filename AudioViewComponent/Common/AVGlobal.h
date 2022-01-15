@@ -114,9 +114,11 @@ public:
     enum ErrorType : int
     {
         NoError //无错误
+        , InputSourceError  //无效的DataSurce
         , InputFormatError  //录制参数错误
         , InputDeviceError  //录制设备错误
         , InputStartError   //录制启动失败
+        , OutputSourceError //无效的DataSurce
         , OutputFormatError //播放格式错误
         , OutputDeviceError //播放设备错误
         , OutputStartError  //播放启动失败
