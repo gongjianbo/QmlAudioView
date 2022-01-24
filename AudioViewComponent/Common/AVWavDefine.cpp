@@ -8,7 +8,7 @@ const char *DATA_FLAG = "data";
 
 AVWavHead::AVWavHead(const QByteArray &audioData)
 {
-    if(audioData.size() < sizeof(AVWavHead))
+    if((size_t)audioData.size() < sizeof(AVWavHead))
         return;
     memcpy(this, audioData.constData(), sizeof(AVWavHead));
 }

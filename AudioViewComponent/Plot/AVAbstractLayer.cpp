@@ -48,8 +48,8 @@ int AVAbstractLayer::getZ() const
 
 void AVAbstractLayer::setZ(int zOrder)
 {
-    if (z != z) {
-        z = z;
+    if (z != zOrder) {
+        z = zOrder;
         emit zChanged();
         emit layerChanged();
     }

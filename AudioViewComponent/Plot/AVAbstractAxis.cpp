@@ -60,11 +60,13 @@ void AVAbstractAxis::setMaxValue(double value)
 
 double AVAbstractAxis::pxToValue(double px) const
 {
+    Q_UNUSED(px)
     return 0.0;
 }
 
 double AVAbstractAxis::valueToPx(double value) const
 {
+    Q_UNUSED(value)
     return 0.0;
 }
 

@@ -7,11 +7,15 @@ AVCallback::~AVCallback()
 
 qint64 AVCallback::readData(char *data, qint64 maxSize)
 {
+    Q_UNUSED(data)
+    Q_UNUSED(maxSize)
     return -1;
 }
 
 qint64 AVCallback::writeData(const char *data, qint64 maxSize)
 {
+    Q_UNUSED(data)
+    Q_UNUSED(maxSize)
     return -1;
 }
 

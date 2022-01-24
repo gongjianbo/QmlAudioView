@@ -366,21 +366,21 @@ void AVValueAxis::calcSpace(double axisLength)
     }
 }
 
-double AVValueAxis::calcPxSpace(double unitP2V, double valueSpace) const
+double AVValueAxis::calcPxSpace(double unitP2V, double valSpace) const
 {
     //这里与真0.0比较
     if (unitP2V <= 0.0) {
         qWarning() << __FUNCTION__ << "unitP2V is too min" << unitP2V;
         return 30.0;
     }
-    return valueSpace / unitP2V;
+    return valSpace / unitP2V;
 }
 
-double AVValueAxis::calcPxStart(double unitP2V, double valueSpace, double valueMin, double valueMax) const
+double AVValueAxis::calcPxStart(double unitP2V, double valSpace, double valueMin, double valueMax) const
 {
     Q_UNUSED(valueMax)
-    if (unitP2V <= 0.0 || valueSpace <= 0.0) {
-        qWarning() << __FUNCTION__ << "unitP2V or valueSpace is too min" << unitP2V << valueSpace;
+    if (unitP2V <= 0.0 || valSpace <= 0.0) {
+        qWarning() << __FUNCTION__ << "unitP2V or valSpace is too min" << unitP2V << valSpace;
         return 0.0;
     }
     //min有正负，而unit和space只有正
@@ -392,14 +392,15 @@ double AVValueAxis::calcPxStart(double unitP2V, double valueSpace, double valueM
     //即起点值应该是value_space的整倍数
     const double begin_precision = std::pow(10, decimalPrecision);
     const double begin_cut = (decimalPrecision <= 0)
-            ? 0
-            : qRound(std::abs(valueMin) * begin_precision) % qRound(valueSpace * begin_precision) / begin_precision;
+            ? 0.0
+            : (qRound(std::abs(valueMin) * begin_precision) % qRound(valSpace * begin_precision) / begin_precision);
     //因为cut是value_space模出来的，且该分支min和value_space都为正，
     //所以起始值(value_space-cut)不会为负。
     //起点px就为起始值*单位值表示的像素；或者为起始值/单位像素表示的值
     //(注意：起始值是距离起点的间隔值)
-    const double begin_val = qFuzzyIsNull(begin_cut) ? 0.0 : (valueMin >= 0.0) ? (valueSpace - begin_cut)
-                                                                               : begin_cut;
+    const double begin_val = qFuzzyIsNull(begin_cut)
+            ? 0.0
+            : ((valueMin >= 0.0) ? (valSpace - begin_cut) : begin_cut);
     return begin_val / unitP2V;
 
     //之前以左上角为起始计算的逻辑，会导致左下角xy的零点相交误差大，现在改为左下角开始算
@@ -408,7 +409,7 @@ double AVValueAxis::calcPxStart(double unitP2V, double valueSpace, double valueM
     //    return begin_val/unitP2V;
     //}else if(getAxisPosition()==AtLeft||getAxisPosition()==AtRight){
     //    //竖向如果从上往下开始计算，则刻度值和坐标y值增长方向相反
-    //    const double end_val=(valueMax-valueMin-begin_val)-valueSpace*(int)((valueMax-valueMin-begin_val)/valueSpace);
+    //    const double end_val=(valueMax-valueMin-begin_val)-valSpace*(int)((valueMax-valueMin-begin_val)/valSpace);
     //    return end_val/unitP2V;
     //}
     //return 0;
@@ -472,14 +473,14 @@ int AVValueAxis::getTickPrecision() const
     return getTickPrecisionHelper(valueSpace, 1, 0);
 }
 
-int AVValueAxis::getTickPrecisionHelper(double valueSpace, double compare, int precision) const
+int AVValueAxis::getTickPrecisionHelper(double valSpace, double compare, int precision) const
 {
     //第二个参数为小数参照，每次递归除以10再和传入的参数一间隔值比较
-    //如果valueSpace大于compare，那么小数精度就是当前precision
-    if (valueSpace >= compare) {
+    //如果valSpace大于compare，那么小数精度就是当前precision
+    if (valSpace >= compare) {
         return precision;
     }
-    return getTickPrecisionHelper(valueSpace, compare / 10, precision + 1);
+    return getTickPrecisionHelper(valSpace, compare / 10, precision + 1);
 }
 
 double AVValueAxis::valueCalcStep() const

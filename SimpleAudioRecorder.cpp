@@ -531,9 +531,9 @@ void SimpleAudioRecorder::loadFile(const QString &filepath)
         }
         //采样率等置为相同参数
         if (pcm_data.count() > 0 && pcm_data.count() % 2 == 0 &&
-                head.fmt.sampleRate == audioFormat.sampleRate() &&
-                head.fmt.bitsPerSample == audioFormat.sampleSize() &&
-                head.fmt.numChannels == audioFormat.channelCount())
+                head.fmt.sampleRate == (unsigned int)audioFormat.sampleRate() &&
+                head.fmt.bitsPerSample == (unsigned short)audioFormat.sampleSize() &&
+                head.fmt.numChannels == (unsigned short)audioFormat.channelCount())
         {
             audioData = pcm_data;
             setHasData(!audioData.isEmpty());

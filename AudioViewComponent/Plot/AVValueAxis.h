@@ -129,15 +129,15 @@ private:
     // 计算间隔和起点
     void calcSpace(double axisLength);
     // 计算刻度像素间隔
-    double calcPxSpace(double unitP2V, double valueSpace) const;
+    double calcPxSpace(double unitP2V, double valSpace) const;
     // 计算刻度像素起点
-    double calcPxStart(double unitP2V, double valueSpace, double valueMin, double valueMax) const;
+    double calcPxStart(double unitP2V, double valSpace, double valueMin, double valueMax) const;
     // 计算值间隔
     double calcValueSpace(double unitP2V, int pxRefSpace) const;
     double calcValueSpaceHelper(double valueRefRange, int dividend) const;
     // 刻度值的小数位数
     int getTickPrecision() const;
-    int getTickPrecisionHelper(double valueSpace, double compare, int precision) const;
+    int getTickPrecisionHelper(double valSpace, double compare, int precision) const;
     // 步进
     double valueCalcStep() const;
     double valueZoomInStep() const;

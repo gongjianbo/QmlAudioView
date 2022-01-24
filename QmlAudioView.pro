@@ -9,9 +9,11 @@ CONFIG += c++11
 CONFIG += utf8_source
 
 DEFINES += QT_DEPRECATED_WARNINGS
-QMAKE_CFLAGS_WARN_ON = /W3
+msvc{
+QMAKE_CFLAGS_WARN_ON = /W3 /WX /w34458
 QMAKE_CXXFLAGS_WARN_ON = $$QMAKE_CFLAGS_WARN_ON
 QMAKE_CXXFLAGS += /sdl
+}
 
 INCLUDEPATH += $$PWD/AudioViewComponent
 include($$PWD/AudioViewComponent/AudioViewComponent.pri)
