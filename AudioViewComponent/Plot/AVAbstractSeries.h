@@ -24,6 +24,10 @@ public:
     AVAbstractAxis *getYAxis();
     void setYAxis(AVAbstractAxis *axis);
 
+protected:
+    virtual void onSetXAxis(AVAbstractAxis *axis);
+    virtual void onSetYAxis(AVAbstractAxis *axis);
+
 signals:
     void xAxisChanged();
     void yAxisChanged();

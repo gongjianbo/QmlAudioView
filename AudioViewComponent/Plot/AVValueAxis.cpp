@@ -4,7 +4,7 @@
 AVValueAxis::AVValueAxis(QObject *parent)
     : AVAbstractAxis(parent)
 {
-
+    acceptEvent = true;
 }
 
 AVValueAxis::CalcMode AVValueAxis::getCalcMode() const
@@ -70,14 +70,18 @@ double AVValueAxis::getMinLimit() const
 
 void AVValueAxis::setMinLimit(double limit)
 {
-    changeMinLimit(limit);
-    emit layerChanged();
+    if (!AVGlobal::fuzzyIsEqual(minLimit, limit)) {
+        changeMinLimit(limit);
+        emit layerChanged();
+    }
 }
 
 void AVValueAxis::changeMinLimit(double limit)
 {
-    minLimit = limit;
-    emit minLimitChanged();
+    if (!AVGlobal::fuzzyIsEqual(minLimit, limit)) {
+        minLimit = limit;
+        emit minLimitChanged();
+    }
 }
 
 double AVValueAxis::getMaxLimit() const
@@ -87,14 +91,18 @@ double AVValueAxis::getMaxLimit() const
 
 void AVValueAxis::setMaxLimit(double limit)
 {
-    changeMaxLimit(limit);
-    emit layerChanged();
+    if (!AVGlobal::fuzzyIsEqual(maxLimit, limit)) {
+        changeMaxLimit(limit);
+        emit layerChanged();
+    }
 }
 
 void AVValueAxis::changeMaxLimit(double limit)
 {
-    maxLimit = limit;
-    emit maxLimitChanged();
+    if (!AVGlobal::fuzzyIsEqual(maxLimit, limit)) {
+        maxLimit = limit;
+        emit maxLimitChanged();
+    }
 }
 
 double AVValueAxis::getMinRange() const
@@ -104,14 +112,18 @@ double AVValueAxis::getMinRange() const
 
 void AVValueAxis::setMinRange(double limit)
 {
-    changeMinRange(limit);
-    emit layerChanged();
+    if (!AVGlobal::fuzzyIsEqual(minRange, limit)) {
+        changeMinRange(limit);
+        emit layerChanged();
+    }
 }
 
 void AVValueAxis::changeMinRange(double limit)
 {
-    minRange = limit;
-    emit minRangeChanged();
+    if (!AVGlobal::fuzzyIsEqual(minRange, limit)) {
+        minRange = limit;
+        emit minRangeChanged();
+    }
 }
 
 double AVValueAxis::getMinValue() const
@@ -121,14 +133,19 @@ double AVValueAxis::getMinValue() const
 
 void AVValueAxis::setMinValue(double value)
 {
-    changeMinValue(value);
-    calcAxis();
+    if (!AVGlobal::fuzzyIsEqual(minValue, value)) {
+        changeMinValue(value);
+        calcAxis();
+    }
 }
 
 void AVValueAxis::changeMinValue(double value)
 {
-    minValue = value;
-    emit minValueChanged();
+    if (!AVGlobal::fuzzyIsEqual(minValue, value)) {
+        //这里判断limit可能会因为qml属性绑定的设置修改顺序导致问题
+        minValue = value;
+        emit minValueChanged();
+    }
 }
 
 double AVValueAxis::getMaxValue() const
@@ -138,14 +155,19 @@ double AVValueAxis::getMaxValue() const
 
 void AVValueAxis::setMaxValue(double value)
 {
-    changeMaxValue(value);
-    calcAxis();
+    if (!AVGlobal::fuzzyIsEqual(maxValue, value)) {
+        changeMaxValue(value);
+        calcAxis();
+    }
 }
 
 void AVValueAxis::changeMaxValue(double value)
 {
-    maxValue = value;
-    emit maxValueChanged();
+    if (!AVGlobal::fuzzyIsEqual(minValue, value)) {
+        //这里判断limit可能会因为qml属性绑定的设置修改顺序导致问题
+        maxValue = value;
+        emit maxValueChanged();
+    }
 }
 
 double AVValueAxis::getUnit1PxToValue() const
@@ -166,6 +188,17 @@ double AVValueAxis::pxToValue(double px) const
 double AVValueAxis::valueToPx(double value) const
 {
     return (value - minValue) * unit1ValueToPx;
+}
+
+bool AVValueAxis::wheelEvent(QWheelEvent *event)
+{
+    QPoint pos = event->position().toPoint();
+    if (event->angleDelta().y() > 0) {
+        zoomValueInPos(pos);
+    } else {
+        zoomValueOutPos(pos);
+    }
+    return true;
 }
 
 void AVValueAxis::draw(QPainter *painter)
@@ -298,8 +331,8 @@ void AVValueAxis::calcAxis()
         if (tickPos.isEmpty() && tickLabel.isEmpty()) {
             tickPos.push_back(getRect().bottom());
             tickPos.push_back(getRect().top());
-            tickLabel.push_back("0");
-            tickLabel.push_back("0");
+            tickLabel.push_back(QString::number(minValue));
+            tickLabel.push_back(QString::number(maxValue));
         }
     }
         break;
@@ -329,8 +362,8 @@ void AVValueAxis::calcAxis()
         if (tickPos.isEmpty() && tickLabel.isEmpty()) {
             tickPos.push_back(getRect().left());
             tickPos.push_back(getRect().right());
-            tickLabel.push_back("0");
-            tickLabel.push_back("0");
+            tickLabel.push_back(QString::number(minValue));
+            tickLabel.push_back(QString::number(maxValue));
         }
     }
         break;
@@ -402,7 +435,7 @@ double AVValueAxis::calcPxStart(double unitP2V, double valSpace, double valueMin
             ? 0.0
             : ((valueMin >= 0.0) ? (valSpace - begin_cut) : begin_cut);
     return begin_val / unitP2V;
-
+    
     //之前以左上角为起始计算的逻辑，会导致左下角xy的零点相交误差大，现在改为左下角开始算
     //if(getAxisPosition()==AtTop||getAxisPosition()==AtBottom){
     //    //横向刻度值的是从左至右，和坐标x值增长方向一样
@@ -452,7 +485,7 @@ double AVValueAxis::calcValueSpaceHelper(double valueRefRange, int dividend) con
     } else {
         return dividend;
     }
-
+    
     //递归思路
     /*if(temp_value>8*x){//x=1,>8--loop
         if(temp_value>8*x(10)){ //x=10,>80--loop
@@ -606,19 +639,17 @@ bool AVValueAxis::moveValueWidthPx(int px)
         if (minValue - move_step < minLimit) {
             move_step = minValue - minLimit;
         }
-        minValue -= move_step;
-        maxValue -= move_step;
+        changeMinValue(minValue - move_step);
+        changeMaxValue(maxValue - move_step);
     } else {
         if (maxValue > maxLimit)
             return false;
         if (maxValue + move_step > maxLimit) {
             move_step = maxLimit - maxValue;
         }
-        minValue += move_step;
-        maxValue += move_step;
+        changeMinValue(minValue + move_step);
+        changeMaxValue(maxValue + move_step);
     }
-    emit minValueChanged();
-    emit maxValueChanged();
     calcAxis();
     return true;
 }
@@ -633,14 +664,12 @@ void AVValueAxis::zoomValueIn()
         return;
     if (val_range - zoom_step < minRange) {
         const double zoom_real_step = val_range - minRange;
-        minValue += zoom_real_step / 2;
-        maxValue = minValue + minRange;
+        changeMinValue(minValue + zoom_real_step / 2);
+        changeMaxValue(minValue + minRange);
     } else {
-        minValue += zoom_step / 2;
-        maxValue -= zoom_step / 2;
+        changeMinValue(minValue + zoom_step / 2);
+        changeMaxValue(maxValue - zoom_step / 2);
     }
-    emit minValueChanged();
-    emit maxValueChanged();
     calcAxis();
 }
 
@@ -657,10 +686,8 @@ void AVValueAxis::zoomValueOut()
             ? (maxLimit - maxValue)
             : (zoom_half);
     //先不考虑补上不足的部分
-    minValue -= min_zoom;
-    maxValue += max_zoom;
-    emit minValueChanged();
-    emit maxValueChanged();
+    changeMinValue(minValue - min_zoom);
+    changeMaxValue(maxValue + max_zoom);
     calcAxis();
 }
 
@@ -675,14 +702,12 @@ void AVValueAxis::zoomValueInPos(const QPoint &pos)
     const double zoom_proportion = calcZoomProportionWithPos(pos);
     if (val_range - zoom_step < minRange) {
         const double zoom_real_step = val_range - minRange;
-        minValue += zoom_real_step / 2;
-        maxValue = minValue + minRange;
+        changeMinValue(minValue + zoom_real_step / 2);
+        changeMaxValue(minValue + minRange);
     } else {
-        minValue += zoom_step * zoom_proportion;
-        maxValue -= zoom_step * (1 - zoom_proportion);
+        changeMinValue(minValue + zoom_step * zoom_proportion);
+        changeMaxValue(maxValue - zoom_step * (1 - zoom_proportion));
     }
-    emit minValueChanged();
-    emit maxValueChanged();
     calcAxis();
 }
 
@@ -702,10 +727,8 @@ void AVValueAxis::zoomValueOutPos(const QPoint &pos)
             ? (maxLimit - maxValue)
             : (max_step);
     //先不考虑补上不足的部分
-    minValue -= min_zoom;
-    maxValue += max_zoom;
-    emit minValueChanged();
-    emit maxValueChanged();
+    changeMinValue(minValue - min_zoom);
+    changeMaxValue(maxValue + max_zoom);
     calcAxis();
 }
 
@@ -721,7 +744,8 @@ void AVValueAxis::overallView()
 
 void AVValueAxis::setLimitRange(double min, double max, double range)
 {
-    if (min >= max || max - min < range) {
+    //无效的值
+    if (min >= max || range < 0 || max - min < range + 0.0001) {
         return;
     }
     changeMinLimit(min);
@@ -732,8 +756,15 @@ void AVValueAxis::setLimitRange(double min, double max, double range)
 
 void AVValueAxis::setValueRange(double min, double max)
 {
+    //无效的值
     if (min >= max || max - min <= minRange) {
         return;
+    }
+    if (min < minLimit) {
+        min = minLimit;
+    }
+    if (max > maxLimit) {
+        max = maxLimit;
     }
     changeMinValue(min);
     changeMaxValue(max);

@@ -185,44 +185,79 @@ void AVAbstractLayer::setLineColor(const QColor &color)
     }
 }
 
-bool AVAbstractLayer::mousePress(const QPoint &, Qt::KeyboardModifiers)
+bool AVAbstractLayer::processEvent(QEvent *event, QPoint pos)
+{
+    //先遍历子节点
+    for (AVAbstractLayer *layer : layers)
+    {
+        //processEvent返回true就不继续传递了
+        if (layer->getAcceptEvent() &&
+                layer->posInArea(pos) &&
+                layer->processEvent(event, pos)) {
+            return true;
+        }
+    }
+    switch (event->type()) {
+    case QEvent::MouseButtonPress:
+        return mousePressEvent(static_cast<QMouseEvent*>(event));
+    case QEvent::MouseMove:
+        return mouseMoveEvent(static_cast<QMouseEvent*>(event));
+    case QEvent::MouseButtonRelease:
+        return mouseReleaseEvent(static_cast<QMouseEvent*>(event));
+    case QEvent::MouseButtonDblClick:
+        return mouseDoubleClickEvent(static_cast<QMouseEvent*>(event));
+    case QEvent::Wheel:
+        return wheelEvent(static_cast<QWheelEvent*>(event));
+    case QEvent::HoverEnter:
+        return hoverEnterEvent(static_cast<QHoverEvent*>(event));
+    case QEvent::HoverMove:
+        return hoverMoveEvent(static_cast<QHoverEvent*>(event));
+    case QEvent::HoverLeave:
+        return hoverLeaveEvent(static_cast<QHoverEvent*>(event));
+    default:
+        break;
+    }
+    return false;
+}
+
+bool AVAbstractLayer::mousePressEvent(QMouseEvent *)
 {
     return false;
 }
 
-bool AVAbstractLayer::mouseMove(const QPoint &, Qt::KeyboardModifiers)
+bool AVAbstractLayer::mouseMoveEvent(QMouseEvent *)
 {
     return false;
 }
 
-bool AVAbstractLayer::mouseRelease(const QPoint &, Qt::KeyboardModifiers)
+bool AVAbstractLayer::mouseReleaseEvent(QMouseEvent *)
 {
     return false;
 }
 
-bool AVAbstractLayer::mouseDoubleClick(const QPoint &, Qt::KeyboardModifiers)
+bool AVAbstractLayer::mouseDoubleClickEvent(QMouseEvent *)
 {
     return false;
 }
 
-bool AVAbstractLayer::mouseWheelUp(const QPoint &, Qt::KeyboardModifiers)
+bool AVAbstractLayer::wheelEvent(QWheelEvent *)
 {
     return false;
 }
 
-bool AVAbstractLayer::mouseWheelDown(const QPoint &, Qt::KeyboardModifiers)
+bool AVAbstractLayer::hoverEnterEvent(QHoverEvent *)
 {
     return false;
 }
 
-void AVAbstractLayer::mouseEnter(const QPoint &)
+bool AVAbstractLayer::hoverMoveEvent(QHoverEvent *)
 {
-    emit layerChanged();
+    return false;
 }
 
-void AVAbstractLayer::mouseLeave()
+bool AVAbstractLayer::hoverLeaveEvent(QHoverEvent *)
 {
-    emit layerChanged();
+    return false;
 }
 
 int AVAbstractLayer::contentHeight() const

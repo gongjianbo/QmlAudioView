@@ -4,7 +4,7 @@
 AVWrapper::AVWrapper(QObject *parent)
     : AVAbstractLayer(parent)
 {
-
+    acceptEvent = true;
 }
 
 AVGlobal::Direction AVWrapper::getDirection() const

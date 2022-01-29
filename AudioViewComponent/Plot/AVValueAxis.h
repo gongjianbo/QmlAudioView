@@ -9,6 +9,7 @@
  * @note
  * 1.limit和value有set和change两种修改值的接口，其中change接口只触发changed信号，不触发计算
  *   但是set接口会触发layerChanged、calcAxis等接口调用
+ * 2.设置limit后最好再设置一次value，目前没有自动关联处理
  */
 class AVValueAxis : public AVAbstractAxis
 {
@@ -60,29 +61,29 @@ public:
     void setRefPixelSpace(int pixel);
 
     // 最小值限制
-    double getMinLimit() const override;
-    void setMinLimit(double limit) override;
+    double getMinLimit() const;
+    void setMinLimit(double limit);
     // change接口只触发changed信号，不触发计算
     void changeMinLimit(double limit);
 
     // 最大值限制
-    double getMaxLimit() const override;
-    void setMaxLimit(double limit) override;
+    double getMaxLimit() const;
+    void setMaxLimit(double limit);
     void changeMaxLimit(double limit);
 
     // 最小范围限制
-    double getMinRange() const override;
-    void setMinRange(double limit) override;
+    double getMinRange() const;
+    void setMinRange(double limit);
     void changeMinRange(double limit);
 
     // 当前显示的最小刻度
-    double getMinValue() const override;
-    void setMinValue(double value) override;
+    double getMinValue() const;
+    void setMinValue(double value);
     void changeMinValue(double value);
 
     // 当前显示的最大刻度
-    double getMaxValue() const override;
-    void setMaxValue(double value) override;
+    double getMaxValue() const;
+    void setMaxValue(double value);
     void changeMaxValue(double value);
 
     // 像素与值的换算
@@ -111,6 +112,8 @@ public:
     */
     double valueToPx(double value) const override;
 
+    // 事件处理
+    bool wheelEvent(QWheelEvent *event) override;
     // 绘制
     void draw(QPainter *painter) override;
 

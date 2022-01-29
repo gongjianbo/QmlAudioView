@@ -4,6 +4,9 @@
 #include <QQmlListProperty>
 #include <QPainter>
 #include <QPainterPath>
+#include <QMouseEvent>
+#include <QHoverEvent>
+#include <QHoverEvent>
 #include "Common/AVGlobal.h"
 
 /**
@@ -89,15 +92,15 @@ public:
     void setLineColor(const QColor &color);
 
     // 操作，return=true表示事件被接收，不再继续传递
-    virtual bool mousePress(const QPoint &pos, Qt::KeyboardModifiers keymod);
-    virtual bool mouseMove(const QPoint &pos, Qt::KeyboardModifiers keymod);
-    virtual bool mouseRelease(const QPoint &pos, Qt::KeyboardModifiers keymod);
-    virtual bool mouseDoubleClick(const QPoint &pos, Qt::KeyboardModifiers keymod);
-
-    virtual bool mouseWheelUp(const QPoint &pos, Qt::KeyboardModifiers keymod);
-    virtual bool mouseWheelDown(const QPoint &pos, Qt::KeyboardModifiers keymod);
-    virtual void mouseEnter(const QPoint &pos);
-    virtual void mouseLeave();
+    virtual bool processEvent(QEvent *event, QPoint pos);
+    virtual bool mousePressEvent(QMouseEvent *event);
+    virtual bool mouseMoveEvent(QMouseEvent *event);
+    virtual bool mouseReleaseEvent(QMouseEvent *event);
+    virtual bool mouseDoubleClickEvent(QMouseEvent *event);
+    virtual bool wheelEvent(QWheelEvent *event);
+    virtual bool hoverEnterEvent(QHoverEvent *event);
+    virtual bool hoverMoveEvent(QHoverEvent *event);
+    virtual bool hoverLeaveEvent(QHoverEvent *event);
 
     // 宽高
     virtual int contentHeight() const;

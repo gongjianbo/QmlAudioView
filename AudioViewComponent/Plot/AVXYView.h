@@ -1,6 +1,5 @@
 #pragma once
 #include <QQuickPaintedItem>
-#include <QEvent>
 #include <QFont>
 #include "Common/AVGlobal.h"
 #include "AVAbstractLayer.h"
@@ -36,9 +35,13 @@ public:
     void paint(QPainter *painter) override;
 
 protected:
+    // qml组件初始化
     void classBegin() override;
     void componentComplete() override;
+    // 窗口尺寸位置变化
     void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
+    // 事件处理
+    bool event(QEvent *ev) override;
 
 signals:
     void fontChanged();
@@ -57,6 +60,8 @@ private:
     QFont font;
     // 背景色
     QColor bgColor{QColor(0, 0, 0)};
+    // event.pos()
+    QPoint eventPos;
 };
 
 

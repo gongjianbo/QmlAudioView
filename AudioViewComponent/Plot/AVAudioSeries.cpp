@@ -1,9 +1,11 @@
 #include "AVAudioSeries.h"
 
+#include <QDebug>
+
 AVAudioSeries::AVAudioSeries(QObject *parent)
     : AVAbstractSeries(parent)
 {
-
+    acceptEvent = true;
 }
 
 AVDataSource *AVAudioSeries::getAudioSource()
@@ -21,61 +23,140 @@ void AVAudioSeries::setAudioSource(AVDataSource *source)
     }
     audioSource = source;
     if (audioSource) {
+        if (xValue) {
+            qint64 point_count = audioSource->getSampleCount(true);
+            xValue->setMaxLimit(point_count);
+            xValue->setMaxValue(point_count);
+        }
         connect(audioSource, &AVDataSource::dataChanged, this, &AVAudioSeries::onDataChange);
     }
     emit audioSourceChanged();
-    onDataChange();
+    calcSeries();
+}
+
+bool AVAudioSeries::wheelEvent(QWheelEvent *event)
+{
+    return xValue ? xValue->wheelEvent(event) : false;
 }
 
 void AVAudioSeries::draw(QPainter *painter)
 {
-    if (!audioSource) {
+    if (!xValue || !yValue || !audioSource) {
         return;
     }
-    // todo 测试绘制，抽样待完成
-    const qreal w = rect.width();
-    const qreal h = rect.height();
-    if (w < 1 || h < 1) {
-        return;
-    }
+
+    painter->setClipRect(rect);
     painter->setPen(lineColor);
+    painter->drawPath(samplePath);
+}
 
-    //目前测试16bit/单声道
+void AVAudioSeries::onSetXAxis(AVAbstractAxis *axis)
+{
+    if (xValue) {
+        xValue->disconnect(this);
+    }
+    xValue = qobject_cast<AVValueAxis*>(axis);
+    if (xValue) {
+        qint64 point_count = 0;
+        if (audioSource) {
+            point_count = audioSource->getSampleCount(true);
+        }
+        xValue->setMaxLimit(point_count);
+        xValue->setMaxValue(point_count);
+        connect(xValue, &AVValueAxis::minValueChanged, this, &AVAudioSeries::calcSeries, Qt::QueuedConnection);
+        connect(xValue, &AVValueAxis::maxValueChanged, this, &AVAudioSeries::calcSeries, Qt::QueuedConnection);
+    }
+}
+
+void AVAudioSeries::onSetYAxis(AVAbstractAxis *axis)
+{
+    if (yValue) {
+        yValue->disconnect(this);
+    }
+    yValue = qobject_cast<AVValueAxis*>(axis);
+    if (yValue) {
+        connect(yValue, &AVValueAxis::minValueChanged, this, &AVAudioSeries::calcSeries, Qt::QueuedConnection);
+        connect(yValue, &AVValueAxis::maxValueChanged, this, &AVAudioSeries::calcSeries, Qt::QueuedConnection);
+    }
+}
+
+void AVAudioSeries::geometryChanged(const QRect &newRect)
+{
+    calcSeries();
+}
+
+void AVAudioSeries::onDataChange()
+{
+    if (!xValue || !yValue || !audioSource) {
+        return;
+    }
+    const qint64 point_count = audioSource->getSampleCount(true);
+    //minlimit 和 minvalue 先预置为 0
+    xValue->setMaxLimit(point_count);
+    xValue->setMaxValue(point_count);
+    calcSeries();
+}
+
+void AVAudioSeries::calcSeries()
+{
+    calcSample();
+    calcPath();
+    emit layerChanged();
+}
+
+void AVAudioSeries::calcSample()
+{
+    sampleIndexs.clear();
+    if (!xValue || !yValue || !audioSource) {
+        return;
+    }
+    const qint64 point_count = audioSource->getSampleCount(true);
+    //先处理小于两个点的情况
+    if (point_count <= 0) {
+        return;
+    } else if (point_count == 1) {
+        sampleIndexs.push_back(0);
+        return;
+    }
+    const qint64 min_xval = qRound64(xValue->getMinValue());
+    const qint64 max_xval = qRound64(xValue->getMaxValue());
+    const qint64 x_range = max_xval - min_xval;
+    //目前仅处理16bit/单声道
     const std::vector<char> &audio_data = audioSource->getData();
-    const qint64 sample_count = audioSource->size() / 2;
     const short *data_ptr = (const short *)audio_data.data();
-
-    //每一段多少采样点
+    const double w = rect.width();
+    //const double h = rect.height();
     //除以2是因为太稀疏了，和audition看起来不一样
-    int x_step = std::ceil(sample_count / (double)rect.width()) / 2;
+    qint64 x_step = std::ceil(x_range / w) / 2;
     if (x_step < 1) {
         x_step = 1;
     }
-    else if (x_step > sample_count) {
-        x_step = sample_count;
+    else if (x_step > x_range) {
+        x_step = x_range;
     }
-    //坐标轴轴适应
-    const double x_scale = w / (double)sample_count;
-    const double y_scale = -h / (double)0x10000;
-
-
-    QPainterPath samplePath;
-    samplePath.moveTo(0, 0);
     short cur_max = 0;
     short cur_min = 0;
     int index_max = 0;
     int index_min = 0;
-    if (sample_count > 0) {
-        samplePath.moveTo(0, data_ptr[0] * y_scale);
-    }
-    //分段找最大最小作为该段的抽样点
-    for (int i = 0; i < sample_count; i += x_step)
+    int first_x = 0;
+    int last_x = 0;
+    //头尾各增加一个，防止左右未贴边
+    sampleIndexs.push_back(0);
+    //频率轴min-max范围内的数据
+    for (qint64 i = 1; i < point_count; i+= x_step)
     {
+        if (i < min_xval) {
+            first_x = i;
+            continue;
+        } else if (i > max_xval) {
+            last_x = i;
+            break;
+        }
         cur_max = data_ptr[i];
         cur_min = data_ptr[i];
         index_max = i;
         index_min = i;
-        for (int j = i; j < i + x_step && j < sample_count; j++)
+        for (qint64 j = i; j < i + x_step && j < point_count; j++)
         {
             //遍历找这一段的最大最小值
             if (cur_max < data_ptr[j])
@@ -89,30 +170,53 @@ void AVAudioSeries::draw(QPainter *painter)
                 index_min = j;
             }
         }
-        QPointF pt_min{index_min * x_scale, cur_min * y_scale};
-        QPointF pt_max{index_max * x_scale, cur_max * y_scale};
+
         //根据先后顺序存最大最小，相等就存一个
         if (index_max < index_min)
         {
-            samplePath.lineTo(pt_max);
+            sampleIndexs.push_back(index_max);
         }
-        samplePath.lineTo(pt_min);
+        sampleIndexs.push_back(index_min);
         if (index_max > index_min)
         {
-            samplePath.lineTo(pt_max);
+            sampleIndexs.push_back(index_max);
         }
     }
-    painter->translate(rect.x(), rect.y() + h / 2);
-    painter->drawPath(samplePath);
+    //头尾各增加一个，防止左右未贴边
+    if (first_x > 1) {
+        sampleIndexs[0] = first_x;
+    }
+    if (last_x > 0 && last_x < point_count) {
+        sampleIndexs.push_back(last_x);
+    }
 }
 
-void AVAudioSeries::onDataChange()
+void AVAudioSeries::calcPath()
 {
-    if (!xAxis || !yAxis || !audioSource) {
+    samplePath = QPainterPath();
+    if (!xValue || !yValue || !audioSource || sampleIndexs.isEmpty()) {
         return;
     }
-    qint64 sample_count = audioSource->getSampleCount(true);
-    xAxis->setMaxLimit(sample_count);
-    xAxis->setMaxValue(sample_count);
-    emit layerChanged();
+
+    //const double x_range = xValue->getMaxValue() - xValue->getMinValue();
+    //const double y_range = yValue->getMaxValue() - yValue->getMinValue();
+    //坐标轴轴适应
+    //const double x_scale = getRect().width() / (double)x_range;
+    //const double y_scale = -getRect().height() / (double)y_range;
+    //目前仅处理16bit/单声道
+    const std::vector<char> &audio_data = audioSource->getData();
+    const short *data_ptr = (const short *)audio_data.data();
+
+    double left = getRect().left();
+    double bottom = getRect().bottom();
+    double x_calc = left + xValue->valueToPx(sampleIndexs.first());
+    double y_calc = bottom - yValue->valueToPx(data_ptr[sampleIndexs.first()]);
+    samplePath.moveTo(x_calc, y_calc);
+    for (int i = 1; i < sampleIndexs.size(); i ++)
+    {
+        x_calc = left + xValue->valueToPx(sampleIndexs.at(i));
+        y_calc = bottom - yValue->valueToPx(data_ptr[sampleIndexs.at(i)]);
+        samplePath.lineTo(x_calc, y_calc);
+    }
 }
+

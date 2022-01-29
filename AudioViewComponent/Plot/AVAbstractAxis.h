@@ -13,26 +13,6 @@ class AVAbstractAxis : public AVAbstractLayer
 public:
     explicit AVAbstractAxis(QObject *parent = nullptr);
 
-    // 最小值限制
-    virtual double getMinLimit() const;
-    virtual void setMinLimit(double limit);
-
-    // 最大值限制
-    virtual double getMaxLimit() const;
-    virtual void setMaxLimit(double limit);
-
-    // 最小范围限制
-    virtual double getMinRange() const;
-    virtual void setMinRange(double limit);
-
-    // 当前显示的最小刻度
-    virtual double getMinValue() const;
-    virtual void setMinValue(double value);
-
-    // 当前显示的最大刻度
-    virtual double getMaxValue() const;
-    virtual void setMaxValue(double value);
-
     /**
     * @brief 坐标轴像素值转数值
     * @param px 鼠标pos
