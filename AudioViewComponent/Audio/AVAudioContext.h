@@ -15,6 +15,7 @@ class AVAudioContext : public QObject
     Q_PROPERTY(AVDataInput* audioInput READ getAudioInput NOTIFY audioInputChanged)
     Q_PROPERTY(AVDataOutput* audioOutput READ getAudioOutput NOTIFY audioOutputChanged)
     Q_PROPERTY(AVDataSource* audioSource READ getAudioSource NOTIFY audioSourceChanged)
+    Q_PROPERTY(AVGlobal::WorkState state READ getState NOTIFY stateChanged)
 public:
     explicit AVAudioContext(QObject *parent = nullptr);
 
@@ -30,25 +31,27 @@ public:
     AVDataSource *getAudioSource();
     //void setAudioSource(AVDataSource *source);
 
+    /// 播放/录音等工作状态
+    AVGlobal::WorkState getState() const;
+    void setState(AVGlobal::WorkState state);
+
 signals:
     void audioInputChanged();
     void audioOutputChanged();
     void audioSourceChanged();
+    //todo状态变更后通知刷新
+    void stateChanged(AVGlobal::WorkState newState, AVGlobal::WorkState oldState);
 
 public slots:
     /// 录音
     void record();
-    /// 暂停录音
-    //void suspendRecord();
-    /// 恢复录音
-    //void resumeRecord();
     /// 播放
-    //void play();
-    /// 暂停播放
-    //void suspendPlay();
-    /// 恢复播放
-    //void resumePlay();
-    /// 停止播放和录制
+    void play();
+    /// 暂停播放或录制
+    void suspend();
+    /// 恢复播放或录制
+    void resume();
+    /// 停止播放或录制
     void stop();
 
     /// 读文件
@@ -63,4 +66,7 @@ private:
     AVDataOutput *audioOutput{nullptr};
     /// 数据存放-使输入/输出/图表可共享数据
     AVDataSource *audioSource{nullptr};
+
+    /// 播放/录音等工作状态
+    AVGlobal::WorkState workState{AVGlobal::Stopped};
 };

@@ -144,6 +144,7 @@ Rectangle {
         }
 
         MyButton {
+            enabled: audio_context.state !== AVGlobal.Recording
             text: "录制"
             onClicked: {
                 audio_context.record()
@@ -151,6 +152,35 @@ Rectangle {
         }
 
         MyButton {
+            enabled: audio_context.audioSource.duration > 0 &&
+                     (audio_context.state === AVGlobal.Stopped ||
+                      audio_context.state === AVGlobal.PlayPaused)
+            text: "播放"
+            onClicked: {
+                audio_context.play()
+            }
+        }
+
+        MyButton {
+            enabled: audio_context.state === AVGlobal.Playing ||
+                     audio_context.state === AVGlobal.Recording
+            text: "暂停"
+            onClicked: {
+                audio_context.suspend()
+            }
+        }
+
+        MyButton {
+            enabled: audio_context.state === AVGlobal.PlayPaused ||
+                     audio_context.state === AVGlobal.RecordPaused
+            text: "继续"
+            onClicked: {
+                audio_context.resume()
+            }
+        }
+
+        MyButton {
+            enabled: audio_context.state !== AVGlobal.Stopped
             text: "停止"
             onClicked: {
                 audio_context.stop()
