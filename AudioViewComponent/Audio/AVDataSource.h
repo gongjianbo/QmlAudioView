@@ -50,11 +50,15 @@ public:
     void clear();
     /// 数据长度size_type无符号类型转为qint64和其他接口兼容
     qint64 size() const;
+    /// 最大存储长度
+    qint64 maxSize() const;
     /// 音频数据
     std::vector<char> &getData();
     const std::vector<char> &getData() const;
     void setData(const std::vector<char> &data);
     void appendData(const std::vector<char> &data);
+    void setData(const char *data, qint64 len);
+    void appendData(const char *data, qint64 len);
     /// 采样点数，如果singleChannel=true,表示只算单个通道的采样点数，否则为所有通道的
     qint64 getSampleCount(bool singleChannel = true) const;
 

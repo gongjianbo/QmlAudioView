@@ -21,11 +21,8 @@ qint64 AVDataInput::writeData(const char *data, qint64 maxSize)
     //此处不判断Source，在start时判断
     //双声道时数据为一左一右连续
     //QByteArray new_data = QByteArray(data, maxSize);
-    std::vector<char> new_data;
-    if (maxSize > 0 && new_data.max_size() > (quint64)maxSize) {
-        new_data.resize(maxSize);
-        memcpy(new_data.data(), data, maxSize);
-        audioSource->appendData(new_data);
+    if (audioSource && maxSize > 0 && audioSource->maxSize() > maxSize) {
+        audioSource->appendData(data, maxSize);
     }
     else {
         qDebug() << __FUNCTION__ << "data size out of range";
@@ -157,35 +154,57 @@ void AVDataInput::freeRecord()
     }
 }
 
-void AVDataInput::onNotify()
-{
-
-}
-
-/*bool AVDataInput::loadFromFile(QByteArray &data, QAudioFormat &format, const QString &filepath)
+bool AVDataInput::loadFile(const QString &filepath)
 {
     stopRecord();
+    if (!audioSource) {
+        return false;
+    }
 
     QFile file(filepath);
     if (file.exists() && file.size() > 44 && file.open(QIODevice::ReadOnly))
     {
         AVWavHead head;
         file.read((char*)&head, 44);
-        QByteArray pcm_data;
-        if (head.isValid()) {
-            //暂时为全部读取
-            pcm_data = file.readAll();
+        qint64 data_size = file.size() - 44;
+        std::vector<char> read_data;
+        read_data.reserve(data_size);
+        if (head.isValid() &&  data_size > 0) {
+            qint64 buf_size = 1024 * 1024 * 10;
+            std::vector<char> read_buf;
+            read_buf.resize(buf_size);
+            qint64 once_size = 0;
+            //读取
+            //pcm_data = file.readAll();
+            while (!file.atEnd()) {
+                once_size = file.read(read_buf.data(), buf_size);
+                if (once_size > 0 && once_size <= buf_size) {
+                    read_data.insert(read_data.end(), read_buf.cbegin(), read_buf.cbegin() + once_size);
+                }
+            }
         }
         file.close();
-
         //采样率等置为相同参数
-        if (pcm_data.count() > 0 && pcm_data.count() % head.fmt.numChannels == 0) {
+        if (head.isValid() && data_size > 0 &&
+                data_size == (qint64)read_data.size() &&
+                data_size == (qint64)head.data.chunkSize &&
+                (data_size % head.fmt.numChannels == 0)) {
+            QAudioFormat format = audioSource->getFormat();
             format.setSampleRate(head.fmt.sampleRate);
             format.setChannelCount(head.fmt.numChannels);
             format.setSampleSize(head.fmt.bitsPerSample);
-            data = pcm_data;
+            inputFormat = format;
+            audioSource->setFormat(format);
+
+            //有效的信息，更新当前波形数据
+            audioSource->setData(read_data);
             return true;
         }
     }
     return false;
-}*/
+}
+
+void AVDataInput::onNotify()
+{
+
+}

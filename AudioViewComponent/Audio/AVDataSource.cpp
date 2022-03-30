@@ -98,6 +98,11 @@ qint64 AVDataSource::size() const
     return (qint64)audioData.size();
 }
 
+qint64 AVDataSource::maxSize() const
+{
+    return (qint64)audioData.max_size();
+}
+
 std::vector<char> &AVDataSource::getData()
 {
     return audioData;
@@ -132,6 +137,28 @@ void AVDataSource::appendData(const std::vector<char> &data)
     emit dataChanged();
 
     calcDuration();
+}
+
+void AVDataSource::setData(const char *data, qint64 len)
+{
+    std::vector<char> temp;
+    if ((quint64)len >= temp.max_size()) {
+        return;
+    }
+    temp.resize(len);
+    memcpy(temp.data(), data, len);
+    setData(temp);
+}
+
+void AVDataSource::appendData(const char *data, qint64 len)
+{
+    std::vector<char> temp;
+    if ((quint64)len >= temp.max_size()) {
+        return;
+    }
+    temp.resize(len);
+    memcpy(temp.data(), data, len);
+    appendData(temp);
 }
 
 qint64 AVDataSource::getSampleCount(bool singleChannel) const

@@ -51,6 +51,11 @@ public slots:
     /// 停止播放和录制
     void stop();
 
+    /// 读文件
+    bool loadFile(const QString &filepath);
+    /// 写文件
+    bool saveFile(const QString &filepath);
+
 private:
     /// 音频输入-录制or文件读取
     AVDataInput *audioInput{nullptr};

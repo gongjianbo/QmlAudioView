@@ -23,7 +23,7 @@ AVDataOutput::~AVDataOutput()
 qint64 AVDataOutput::readData(char *data, qint64 maxSize)
 {
     //此处不判断Source，在start时判断
-    if (!data || maxSize < 1)
+    if (!data || maxSize < 1 || !audioSource)
         return 0;
     const std::vector<char> &audio_data = audioSource->getData();
     //如果是选区播放，可以将截至位置减去播放位置
@@ -270,6 +270,45 @@ void AVDataOutput::freePlay()
     }
 }
 
+bool AVDataOutput::saveFile(const QString &filepath)
+{
+    stopPlay();
+    if (!audioSource) {
+        return false;
+    }
+    //QFile不能生成目录
+    QFileInfo info(filepath);
+    if (!info.dir().exists()) {
+        info.dir().mkpath(info.absolutePath());
+    }
+
+    QFile file(filepath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        return false;
+    }
+
+    QAudioFormat format = audioSource->getFormat();
+    const std::vector<char> &data = audioSource->getData();
+    if (data.size() == 0) {
+        return false;
+    }
+
+    //文件头
+    AVWavHead head(format.sampleRate(), format.sampleSize(),
+                   format.channelCount(), (unsigned int)data.size());
+    //写文件
+    file.write((const char*)(&head), sizeof(AVWavHead));
+    qint64 data_size = (qint64)data.size();
+    while (data_size > 1024 * 1024 * 10) {
+        file.write(data.data(), 1024 * 1024 * 10);
+        data_size -= 1024 * 1024 * 10;
+    }
+    //尾巴那点数据
+    file.write(data.data(), data_size);
+    file.close();
+    return true;
+}
+
 void AVDataOutput::onNotify()
 {
     if (!audioOutput || !audioSource)
@@ -297,26 +336,3 @@ void AVDataOutput::onNotify()
     }
     setCurrentIndex(cur_pos);
 }
-
-/*bool AVDataOutput::saveToFile(const QByteArray data, const QAudioFormat &format, const QString &filepath)
-{
-    if (data.isEmpty())
-        return false;
-    //qfile不能生成目录
-    QFileInfo info(filepath);
-    if (!info.dir().exists())
-        info.dir().mkpath(info.absolutePath());
-
-    QFile file(filepath);
-    if (!file.open(QIODevice::WriteOnly)) {
-        return false;
-    }
-
-    //暂时全部写入
-    AVWavHead head(format.sampleRate(), format.sampleSize(),
-                   format.channelCount(), data.size());
-    file.write((const char*)(&head), sizeof(AVWavHead));
-    file.write(data);
-    file.close();
-    return true;
-}*/

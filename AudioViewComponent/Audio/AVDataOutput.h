@@ -69,12 +69,10 @@ public:
 
     /**
      * @brief 数据保存到文件
-     * @param data 音频数据
-     * @param format 数据格式参数
      * @param filepath 文件路径
      * @return =true则操作成功
      */
-    //bool saveToFile(const QByteArray data, const QAudioFormat &format, const QString &filepath);
+    bool saveFile(const QString &filepath);
 
 signals:
     void errorChanged(AVGlobal::ErrorType error);

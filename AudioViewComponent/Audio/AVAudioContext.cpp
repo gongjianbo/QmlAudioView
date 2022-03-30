@@ -1,4 +1,5 @@
 #include "AVAudioContext.h"
+#include <QDebug>
 
 AVAudioContext::AVAudioContext(QObject *parent)
     : QObject(parent)
@@ -49,4 +50,21 @@ void AVAudioContext::stop()
 {
     audioInput->stopRecord();
     audioOutput->stopPlay();
+}
+
+bool AVAudioContext::loadFile(const QString &filepath)
+{
+    //停止当前播放-播放位置置零-加载数据
+    stop();
+    //setPosition(0);
+    const bool ret = audioInput->loadFile(filepath);
+    qDebug() << __FUNCTION__ << ret << filepath;
+    return ret;
+}
+
+bool AVAudioContext::saveFile(const QString &filepath)
+{
+    const bool ret = audioOutput->saveFile(filepath);
+    qDebug() << __FUNCTION__ << ret << filepath;
+    return ret;
 }

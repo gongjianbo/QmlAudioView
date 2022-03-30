@@ -156,5 +156,19 @@ Rectangle {
                 audio_context.stop()
             }
         }
+
+        MyButton {
+            text: "保存文件"
+            onClicked: {
+                audio_context.saveFile("record.wav")
+            }
+        }
+
+        MyButton {
+            text: "读取文件"
+            onClicked: {
+                audio_context.loadFile("record.wav")
+            }
+        }
     }
 }
