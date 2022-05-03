@@ -26,6 +26,7 @@ Rectangle {
             pixelSize: 12
         }
 
+        //左侧坐标
         AVWrapper {
             position: AVGlobal.PosLeft
             direction: AVGlobal.LeftToRight
@@ -54,6 +55,7 @@ Rectangle {
             }
         }
 
+        //右侧坐标
         AVWrapper {
             position: AVGlobal.PosRight
             direction: AVGlobal.LeftToRight
@@ -71,23 +73,28 @@ Rectangle {
             }
         }
 
+        //顶部坐标
         AVWrapper {
             position: AVGlobal.PosTop
             direction: AVGlobal.TopToBottom
             spacing: 10
             AVValueAxis {
                 id: v3
-                implicitHeight: 50
+                implicitHeight: 40
                 position: AVGlobal.PosTop
                 bgColor: "#333333"
             }
-            AVValueAxis {
-                implicitHeight: 30
+            AVAudioThumbnail {
+                implicitHeight: 40
                 position: AVGlobal.PosTop
                 bgColor: "#222222"
+                seriesColor: "#FFA500"
+                displayXAxis: x_axis
+                audioSource: audio_context.audioSource
             }
         }
 
+        //底部坐标
         AVWrapper {
             position: AVGlobal.PosBottom
             direction: AVGlobal.TopToBottom
@@ -107,21 +114,22 @@ Rectangle {
             }
         }
 
+        //底部网格
         AVXYGrid {
             bgColor: "#112233"
             xAxis: x_axis
             yAxis: y_axis
         }
 
+        //波形
         AVAudioSeries {
-            lineColor: "#00FF11"
             xAxis: x_axis
             yAxis: y_axis
             audioSource: audio_context.audioSource
         }
     }
 
-    //【】非可视部件也可以放到外面
+    //【】非可视部件
     AVAudioContext {
         id: audio_context
     }

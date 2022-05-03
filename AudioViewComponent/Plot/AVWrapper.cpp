@@ -108,13 +108,17 @@ void AVWrapper::draw(QPainter *painter)
     //qDebug()<<rect;
     //painter->fillRect(rect, QColor(255, 255, 255, 50));
     for (AVAbstractLayer *layer : layers) {
-        if (layer->getVisible()) layer->draw(painter);
+        if (layer->getVisible()) {
+            painter->save();
+            layer->draw(painter);
+            painter->restore();
+        }
     }
 }
 
 void AVWrapper::geometryChanged(const QRect &newRect)
 {
-    rect = newRect;
+    //rect = newRect;
     int px = 0;
     for (auto sub : layers)
     {
@@ -134,5 +138,5 @@ void AVWrapper::geometryChanged(const QRect &newRect)
             px += temp + getSpacing();
         }
     }
-    emit layerChanged();
+    //emit layerChanged();
 }

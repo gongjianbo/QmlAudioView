@@ -37,6 +37,20 @@ void AVAbstractSeries::setYAxis(AVAbstractAxis *axis)
     }
 }
 
+QColor AVAbstractSeries::getSeriesColor() const
+{
+    return seriesColor;
+}
+
+void AVAbstractSeries::setSeriesColor(const QColor &color)
+{
+    if (seriesColor != color) {
+        seriesColor = color;
+        emit seriesColorChanged();
+        emit layerChanged();
+    }
+}
+
 void AVAbstractSeries::onSetXAxis(AVAbstractAxis *axis)
 {
     Q_UNUSED(axis)

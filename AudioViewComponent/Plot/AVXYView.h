@@ -6,7 +6,7 @@
 #include "AVXYLayout.h"
 
 /**
- * @brief 直角坐标系的图表绘制区域
+ * @brief 二维图表绘制区域
  * @author 龚建波
  * @date 2022-01-03
  */
@@ -63,5 +63,3 @@ private:
     // event.pos()
     QPoint eventPos;
 };
-
-

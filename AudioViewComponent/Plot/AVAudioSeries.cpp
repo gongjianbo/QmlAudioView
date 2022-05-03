@@ -46,7 +46,7 @@ void AVAudioSeries::draw(QPainter *painter)
     }
 
     painter->setClipRect(rect);
-    painter->setPen(lineColor);
+    painter->setPen(seriesColor);
     painter->drawPath(samplePath);
 }
 

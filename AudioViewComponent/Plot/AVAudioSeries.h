@@ -14,6 +14,7 @@
 class AVAudioSeries : public AVAbstractSeries
 {
     Q_OBJECT
+    /// 数据源
     Q_PROPERTY(AVDataSource* audioSource READ getAudioSource WRITE setAudioSource NOTIFY audioSourceChanged)
 public:
     explicit AVAudioSeries(QObject *parent = nullptr);
@@ -22,7 +23,7 @@ public:
     AVDataSource *getAudioSource();
     void setAudioSource(AVDataSource *source);
 
-    // 事件处理
+    // 鼠标滚轮事件处理
     bool wheelEvent(QWheelEvent *event) override;
     // 绘制
     void draw(QPainter *painter) override;

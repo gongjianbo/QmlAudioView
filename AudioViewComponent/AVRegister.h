@@ -16,6 +16,7 @@
 #include "Plot/AVXYGrid.h"
 #include "Plot/AVValueAxis.h"
 #include "Plot/AVAudioSeries.h"
+#include "Plot/AVAudioThumbnail.h"
 
 //qt5 register QML component
 //注册为QML组件
@@ -43,6 +44,7 @@ inline void registerComponent(QQmlEngine*)
     qmlRegisterType<AVWrapper>("AudioView", 1, 0, "AVWrapper");
     qmlRegisterType<AVValueAxis>("AudioView", 1, 0, "AVValueAxis");
     qmlRegisterType<AVAudioSeries>("AudioView", 1, 0, "AVAudioSeries");
+    qmlRegisterType<AVAudioThumbnail>("AudioView", 1, 0, "AVAudioThumbnail");
 }
 
 }

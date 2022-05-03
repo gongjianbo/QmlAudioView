@@ -92,4 +92,3 @@ protected:
     QList<AVAbstractLayer*> bottomLayers;
     QList<AVAbstractLayer*> centerLayers;
 };
-
