@@ -90,6 +90,7 @@ Rectangle {
                 bgColor: "#222222"
                 seriesColor: "#FFA500"
                 displayXAxis: x_axis
+                pointerFrame: audio_context.playFrame
                 audioSource: audio_context.audioSource
             }
         }
@@ -125,6 +126,7 @@ Rectangle {
         AVAudioSeries {
             xAxis: x_axis
             yAxis: y_axis
+            pointerFrame: audio_context.playFrame
             audioSource: audio_context.audioSource
         }
     }

@@ -34,6 +34,34 @@ void AVAudioSeries::setAudioSource(AVDataSource *source)
     calcSeries();
 }
 
+qint64 AVAudioSeries::getPointerFrame() const
+{
+    return pointerFrame;
+}
+
+void AVAudioSeries::setPointerFrame(qint64 frame)
+{
+    if (pointerFrame != frame) {
+        pointerFrame = frame;
+        emit pointerFrameChanged();
+        emit layerChanged();
+    }
+}
+
+QColor AVAudioSeries::getPointerColor() const
+{
+    return pointerColor;
+}
+
+void AVAudioSeries::setPointerColor(const QColor &color)
+{
+    if (pointerColor != color) {
+        pointerColor = color;
+        emit pointerColorChanged();
+        emit layerChanged();
+    }
+}
+
 bool AVAudioSeries::wheelEvent(QWheelEvent *event)
 {
     return xValue ? xValue->wheelEvent(event) : false;
@@ -45,9 +73,18 @@ void AVAudioSeries::draw(QPainter *painter)
         return;
     }
 
+    //只绘制区域内
     painter->setClipRect(rect);
     painter->setPen(seriesColor);
     painter->drawPath(samplePath);
+
+    if (!audioSource->isEmpty()) {
+        //绘制播放进度指示器
+        painter->setPen(pointerColor);
+        double pointer_x = rect.left() + xValue->valueToPx(pointerFrame);
+        painter->drawLine(pointer_x, rect.top(), pointer_x, rect.bottom());
+    }
+    painter->setClipping(false);
 }
 
 void AVAudioSeries::onSetXAxis(AVAbstractAxis *axis)

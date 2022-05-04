@@ -12,10 +12,14 @@
 class AVAudioContext : public QObject
 {
     Q_OBJECT
+    /// 管理输入输出
     Q_PROPERTY(AVDataInput* audioInput READ getAudioInput NOTIFY audioInputChanged)
     Q_PROPERTY(AVDataOutput* audioOutput READ getAudioOutput NOTIFY audioOutputChanged)
     Q_PROPERTY(AVDataSource* audioSource READ getAudioSource NOTIFY audioSourceChanged)
+    /// 播放/录音等工作状态
     Q_PROPERTY(AVGlobal::WorkState state READ getState NOTIFY stateChanged)
+    /// 当前播放位置，单位帧
+    Q_PROPERTY(qint64 playFrame READ getPlayFrame WRITE setPlayFrame NOTIFY playFrameChanged)
 public:
     explicit AVAudioContext(QObject *parent = nullptr);
 
@@ -35,12 +39,17 @@ public:
     AVGlobal::WorkState getState() const;
     void setState(AVGlobal::WorkState state);
 
+    /// 当前播放位置，单位帧
+    qint64 getPlayFrame() const;
+    void setPlayFrame(qint64 frame);
+
 signals:
     void audioInputChanged();
     void audioOutputChanged();
     void audioSourceChanged();
     //todo状态变更后通知刷新
     void stateChanged(AVGlobal::WorkState newState, AVGlobal::WorkState oldState);
+    void playFrameChanged(qint64 frame);
 
 public slots:
     /// 录音
@@ -69,4 +78,7 @@ private:
 
     /// 播放/录音等工作状态
     AVGlobal::WorkState workState{AVGlobal::Stopped};
+
+    /// 播放位置
+    qint64 playFrame{0};
 };

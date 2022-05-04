@@ -14,14 +14,17 @@ AVAudioContext::AVAudioContext(QObject *parent)
     audioInput = new AVDataInput(this);
     audioInput->setAudioSource(audioSource);
     connect(audioInput, &AVDataInput::durationChanged, this, [this](){
-
+        setPlayFrame(0);
     });
 
     //输出
     audioOutput = new AVDataOutput(this);
     audioOutput->setAudioSource(audioSource);
-    connect(audioOutput, &AVDataOutput::positionChanged, this, [this](){
-
+    //connect(audioOutput, &AVDataOutput::positionChanged, this, [this](){ });
+    connect(audioOutput, &AVDataOutput::currentIndexChanged, this, [this](qint64 index){
+        QAudioFormat format = audioSource->getFormat();
+        qint64 frame = index / (format.sampleSize() / 8) / format.channelCount();
+        setPlayFrame(frame);
     });
     connect(audioOutput, &AVDataOutput::playFinished, this, &AVAudioContext::stop);
 }
@@ -54,6 +57,19 @@ void AVAudioContext::setState(AVGlobal::WorkState state)
     const auto old_state = workState;
     workState = state;
     emit stateChanged(state, old_state);
+}
+
+qint64 AVAudioContext::getPlayFrame() const
+{
+    return playFrame;
+}
+
+void AVAudioContext::setPlayFrame(qint64 frame)
+{
+    if (playFrame != frame) {
+        playFrame = frame;
+        emit playFrameChanged(playFrame);
+    }
 }
 
 void AVAudioContext::record()
